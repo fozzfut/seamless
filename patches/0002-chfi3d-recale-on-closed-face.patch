@@ -107,6 +107,16 @@ OCCT's own suite, group blend, testgrid, one DRAWEXE process per case:
   blend/simple/H4     426419, BRepCheck_UnorientableShape + BRepCheck_NotClosed
   blend/buildevol/D6  425937, BRepCheck_UnorientableShape + BRepCheck_NotClosed
 
+The one configuration the new term does not separate BY DIRECTION -- a face
+closed in U, whose basis is periodic in V as well, but which is not closed in V,
+so that ChFi3d_Recale could still shift in V -- probed directly with a torus
+whose tube is cut in V and whose revolution is a full turn
+(tests-fillet/torus_v_probe.tcl, ptorus 50 10 0 {190,200,270,300} x radius
+{1,2,4}, 12 solids, 21 fillets built and 15 refused): the stock log and the
+patched log are identical, so the residual is not reached there.  That is a
+probe, not a proof; a direction-aware guard would need the test to move inside
+ChFi3d_Recale, which has another caller (:4031) and is out of this patch's scope.
+
 Generated differential group "seamless" (tests-fillet/gen_seamless_group.py):
 cube / cylinder / cone / sphere / torus edges, box corners, and a rib swept
 through a full turn in 10 degree steps, 247 cases: 247 of 247 logs byte-identical.
