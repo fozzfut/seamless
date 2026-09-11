@@ -1,0 +1,157 @@
+Subject: [PATCH] ChFi3d: reconcile the two 2d points of a corner on a CLOSED
+ face, not on any periodic one
+
+PerformOneCorner builds two 2d points on the face at the end of the fillet
+(pfac1, pfac2) and hands them to ChFi3d_ComputeCurves as Pardeb(3)/Parfin(3).
+When that face carries a seam and the corner vertex sits on it, the two points
+come off the two different branches of the seam pcurve, and the trim window
+built from them (ChFi3d_Boite / ChFi3d_BoundFac, five lines below) then does not
+contain the corner vertex.  ChFi3d_Recale exists to bring the pair back onto one
+branch, but it was called only in the ChFiDS_OnSame state, and the seam case
+arrives here with onsame == False.
+
+Calling it unconditionally (patches/0001-chfi3d-recale-unconditional.patch)
+repairs the seam case but breaks two others: blend/simple/H4 and
+blend/buildevol/D6 turn from OK into FAILED with an unorientable, non-closed
+shell.  The reason is that ChFi3d_Recale tests the periodicity of the BASIS
+surface, after the trim has been discarded (ChFi3d_Builder_C1.cxx:444-447), so on
+a face that is periodic but NOT closed its "more than half a period apart" test
+is met by two perfectly legal points, and it then shifts one of them a whole
+period outside the face.
+
+The missing term is therefore not periodicity but closedness -- "the face trim
+spans the whole period", which is exactly what carrying a seam edge means.
+BRepAdaptor_Surface::IsUClosed / IsVClosed is OCCT's own test for it
+(GeomAdaptor_Surface.cxx:605-616) and needs no new code: Bs is already loaded
+from the face with restriction on this path (Bs.Initialize(Fv), :748).
+
+--------------------------------------------------------------------------------
+MEASURED AT THIS LINE, stock V7_8_1, instrumented TKFillet
+(build-scripts/chfi3d_cond_edit.py trace), three corners side by side
+--------------------------------------------------------------------------------
+
+  term                      owner's part      blend/simple/H4   blend/buildevol/D6
+                            (Edge9, seam on   (270 deg surface  (the same solid,
+                             the end vertex)   of revolution)    evolutive radius)
+  ------------------------  ----------------  ----------------  ------------------
+  onsame                    0                 0                 0
+  surface of the face       CylindricalSurf   SurfaceOfRevol    SurfaceOfRevol
+  Geom_RectangularTrimmed   no                no                no
+  basis IsUPeriodic         1                 1                 1   <- no separation
+  basis UPeriod             6.283185307       6.283185307       6.283185307
+  face U range              [0, 6.283185307]  [0, 4.712388980]  [0, 4.712388980]
+  face U span / UPeriod     1.000             0.750             0.750
+  Bs.IsUClosed              1                 0                 0   <- SEPARATES
+  Bs.IsVClosed              0                 0                 0
+  seam edges of the face    2 (in U)          0                 0   <- SEPARATES
+  ChFi3d_Couture(Fv)        1                 0                 0   <- SEPARATES
+  pfac1.X                   6.176614355       0.000000000       0.000000000
+  pfac2.X                   0.106570952       4.712388980       4.712388980
+  |du|                      6.070043402       4.712388980       4.712388980
+  0.5 * UPeriod             3.141592654       3.141592654       3.141592654
+  ChFi3d_Recale would fire  1                 1                 1   <- no separation
+  it would move pfac2.X to  6.389756260       -1.570796327      -1.570796327
+                            (onto the branch  (a whole period   (a whole period
+                             of pfac1: the     outside the       outside the
+                             corner is then    face, and the     face, and the
+                             inside the trim)  shell is then     shell is then
+                                               unorientable)     unorientable)
+
+Both surviving terms (closedness, and the presence of a seam edge) agree on all
+three corners.  IsUClosed/IsVClosed is the one taken: O(1), direction-aware, and
+already the adaptor's own vocabulary, whereas ChFi3d_Couture builds an edge map
+and does not say in which parameter the seam runs.
+
+The `onsame` term is kept first, and short-circuits, so that the OnSame path is
+bit-for-bit what it was: there Bs is loaded WITHOUT restriction
+(Bs.Initialize(Fv,Standard_False), :698-700) and IsUClosed would not be the
+face's own answer but the surface's.
+
+--------------------------------------------------------------------------------
+RESULT.  One kernel tree (C:/dev/occt-cond, git archive V7_8_1, md5 of
+ChFi3d_Builder_C1.cxx 908581ebdfb6dc5fa8914a027299210f), one build tree, one set
+of 17 other DLLs; TKFillet.dll is the only thing that differs between columns.
+--------------------------------------------------------------------------------
+
+The owner's part, BREP on bare OCCT, no FreeCAD in the process
+(repro/cpp/edge9_fillet.cpp, one process and a 310 s deadline per radius;
+base volume 5456.580740 mm3):
+
+  radius  stock                                          this patch
+  ------  ---------------------------------------------  ------------------------
+  0.10    BROKEN_WRONG_VOLUME  vol   -142.297918  DIRTY  OK  5456.567068  clean
+  0.25    BROKEN_WRONG_VOLUME  vol  5456.558518   DIRTY  OK  5456.495289  clean
+  0.45    BROKEN_WRONG_VOLUME  vol  4595.280606   DIRTY  OK  5456.303855  clean
+  0.50    TIMEOUT, killed at 310.106 s                   OK  5456.238896  clean
+  0.55    TIMEOUT, killed at 310.085 s                   OK  5456.167095  clean
+  1.00    BROKEN_VOLUME_GREW   vol  6053.913015   DIRTY  OK  5455.212690  clean
+  2.00    BROKEN_VOLUME_GREW   vol  6034.594808   DIRTY  OK  5451.097682  clean
+
+  Seven radii out of seven: isValid true and BRepAlgoAPI_Check clean, 0.014-0.018 s.
+  At r = 1.0 the patched volume is 5455.212690 against the analytic ideal
+  5455.213593, i.e. -0.000903 mm3, 0.066 % of the 1.367147 mm3 the fillet removes.
+  Stock at that radius does not remove material at all, it ADDS 597.332276 mm3.
+
+OCCT's own suite, group blend, testgrid, one DRAWEXE process per case:
+
+  cases                                              475 (183 executed, 292 skipped:
+                                                     occt-test-data unreachable)
+  status differences stock -> patch                  0   (181 OK in both)
+  per-case logs compared byte for byte               475
+  byte-identical                                     475
+  blend/simple/H4                                    426531, valid, in both
+  blend/buildevol/D6                                 426060, valid, in both
+
+  Control, same tree, guard simply dropped (patch 0001), to prove the harness can
+  see the regression at all:
+  blend/simple/H4     426419, BRepCheck_UnorientableShape + BRepCheck_NotClosed
+  blend/buildevol/D6  425937, BRepCheck_UnorientableShape + BRepCheck_NotClosed
+
+Generated differential group "seamless" (tests-fillet/gen_seamless_group.py):
+cube / cylinder / cone / sphere / torus edges, box corners, and a rib swept
+through a full turn in 10 degree steps, 247 cases: 247 of 247 logs byte-identical.
+
+NOT covered: the 292 blend cases and all 279 chamfer cases that need
+occt-test-data, and the groups bugs / offset / feat / heal.
+
+--- a/src/ChFi3d/ChFi3d_Builder_C1.cxx
++++ b/src/ChFi3d/ChFi3d_Builder_C1.cxx
+@@ -804,7 +804,37 @@
+     else {
+       pfil2 = Fi2.PCurveOnSurf()->Value(Fi2.Parameter(!isfirst));
+     }
+-    if (onsame) ChFi3d_Recale(Bs,pfac1,pfac2,(IFadArc == 1));
++    // pfac1 and pfac2 are two 2d points on the same face Bs at the end of the
++    // fillet. When that face carries a seam they can be returned on the two
++    // different branches of the seam pcurve - u and u + period are the same 3d
++    // point, so no check downstream notices - and the trim window built from
++    // them below (ChFi3d_Boite/ChFi3d_BoundFac) then does not contain the corner
++    // vertex. ChFi3d_Recale is the helper that brings them back to one branch.
++    //
++    // onsame: the state in which ChFi3d_Recale was called until now. Kept first
++    // so that the OnSame path, where Bs is loaded without restriction
++    // (Bs.Initialize(Fv,Standard_False) above) and its IsUClosed would not be
++    // the face's own answer, keeps its old behaviour exactly.
++    //
++    // IsUClosed/IsVClosed: the adaptor's test for "the face trim spans the whole
++    // period", which is what having a seam edge means. It is needed because
++    // ChFi3d_Recale looks at the periodicity of the BASIS surface, after the
++    // trim is discarded, and its "more than half a period apart" test is then
++    // met by two perfectly legal points on a face that is periodic but not
++    // closed. Measured at this line, stock 7.8.1, three corners:
++    //   cylindrical face with a seam on the corner vertex (the reported defect):
++    //     face U range [0, 6.283185307] = UPeriod, IsUClosed True, 2 seam edges,
++    //     pfac1.X 6.176614355, pfac2.X 0.106570952, |du| 6.070043402;
++    //     ChFi3d_Recale moves pfac2.X to 6.389756260, i.e. onto the branch of
++    //     pfac1, and the corner is then found.
++    //   270 degree surface of revolution (tests blend/simple/H4 and
++    //   blend/buildevol/D6): face U range [0, 4.712388980] = 3/4 of UPeriod,
++    //     IsUClosed False, no seam edge, pfac1.X 0, pfac2.X 4.712388980,
++    //     |du| 4.712388980 > 0.5*UPeriod; calling ChFi3d_Recale here moves
++    //     pfac2.X to -1.570796327, a whole period outside the face, and the
++    //     resulting shell is unorientable and not closed.
++    if (onsame || Bs.IsUClosed() || Bs.IsVClosed())
++      ChFi3d_Recale(Bs,pfac1,pfac2,(IFadArc == 1));
+
+     Pardeb(1)= pfil1.X(); Pardeb(2) = pfil1.Y();
+     Pardeb(3)= pfac1.X(); Pardeb(4) = pfac1.Y();
