@@ -10,3 +10,9 @@ occt/
 *.log
 *.brep
 *.step
+# кэш Python
+__pycache__/
+*.pyc
+# временные выгрузки GitHub API
+.c_*.json
+.hist_*.json
