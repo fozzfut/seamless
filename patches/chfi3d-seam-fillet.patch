@@ -1,0 +1,43 @@
+# Seam-fillet fix for OCCT 7.8.1 (tag V7_8_1).
+#
+# ChFi3d_Builder::PerformOneCorner computes the corner curve between the fillet
+# surface and the face the spine ends on. pfac1 and pfac2 are its two ends, as 2d
+# points on that face. When the face is periodic (a cylinder with a seam) the two
+# points can come out on opposite branches of u: u and u+2pi are the same 3d point,
+# so no downstream check notices, and the corner curve is then built the long way
+# round the cylinder. ChFi3d_Recale is the helper that normalises exactly this, and
+# it was guarded by 'if (onsame)'. The seam defect occurs with onsame == false.
+#
+# Measured on the fixture in repro/cpp/seam_fillet.cpp, radius 1.0, seam endpoint on
+# the spine's end vertex:  before, the fillet grew the solid by 374.971265 mm3 and
+# BRepAlgoAPI_Check was dirty; after, it removes 1.368076 mm3 against an analytic
+# 1.367173 and the check is clean.  Full numbers: repro/cpp/fix_output.txt.
+#
+# The sibling routine ChFi3d_Builder::IntersectMoreCorner already calls the same
+# helper with the same argument unconditionally.
+#
+# Apply with:  patch -p0 < patches/chfi3d-seam-fillet.patch   (from the OCCT root)
+# or reproducibly with:  python build-scripts/chfi3d_patch.py fix
+
+--- src/ChFi3d/ChFi3d_Builder_C1.cxx.orig
++++ src/ChFi3d/ChFi3d_Builder_C1.cxx
+@@ -804,7 +804,18 @@
+     else {
+       pfil2 = Fi2.PCurveOnSurf()->Value(Fi2.Parameter(!isfirst));
+     }
+-    if (onsame) ChFi3d_Recale(Bs,pfac1,pfac2,(IFadArc == 1));
++    // ------------------------------------------------------------------
++    // seam-fillet fix, 2026-09-12.
++    // pfac1 and pfac2 are two 2d points on the SAME face surface Bs. When that
++    // surface is periodic they can come out on opposite branches of u (u and
++    // u+2pi are the same 3d point, so no downstream check notices), and then
++    // Pardeb/Parfin describe the long way round the cylinder instead of the
++    // short arc. ChFi3d_Recale is the helper that normalises exactly this.
++    // It was called only in the `onsame` case; the seam defect happens with
++    // onsame == false, where it was skipped. IntersectMoreCorner (the sibling
++    // routine) already calls it unconditionally.
++    ChFi3d_Recale(Bs,pfac1,pfac2,(IFadArc == 1));
++    // ------------------------------------------------------------------
+ 
+     Pardeb(1)= pfil1.X(); Pardeb(2) = pfil1.Y();
+     Pardeb(3)= pfac1.X(); Pardeb(4) = pfac1.Y();

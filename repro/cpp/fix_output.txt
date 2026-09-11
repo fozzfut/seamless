@@ -1,0 +1,270 @@
+========================================================================
+ fix_output.txt -- the raw measured output behind docs/FIX.md
+ 12 September 2026. Kernel: OCCT 7.8.1 (tag V7_8_1), built from source.
+ Private source tree C:/dev/occt-fix, private build tree build/occt-fix,
+ because another agent team was editing the shared clone at the same time.
+ Runtime per variant: build/variant/<name>/ = 17 pristine sibling DLLs plus
+ one TKFillet.dll. Nothing but TKFillet.dll differs between the variants.
+========================================================================
+
+### 1. THE PRIVATE TREE REPRODUCES THE DEFECT TO THE DIGIT
+###    bash repro/cpp/run_seam_fillet.sh 300   OCCT_BIN=build/variant/pristine
+rotDeg   radius   distVtx      status                 valid   volume         removed        analytic     secs     bop
+0        0.25     11.514078    OK                     true    5849.388121    +0.085453      0.085448     0.003    clean
+0        0.5      11.514078    OK                     true    5849.131723    +0.341850      0.341793     0.003    clean
+0        1.0      11.514078    OK                     true    5848.105498    +1.368076      1.367173     0.003    clean
+0        2.0      11.514078    OK                     true    5843.990406    +5.483168      5.468693     0.004    clean
+270      0.25     0.000000     BROKEN_WRONG_VOLUME    true    5849.420416    +0.053154      0.085448     0.012    DIRTY
+270      0.5      0.000000     BROKEN_WRONG_VOLUME    false   4953.892213    +895.581358    0.341793     0.012    DIRTY
+270      1.0      0.000000     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.010    DIRTY
+270      2.0      0.000000     BROKEN_VOLUME_GREW     false   6193.313396    -343.839826    5.468693     0.010    DIRTY
+
+### 2. WHICH CORNER ROUTINE IS USED  (instrumented TKFillet, CHFI3D_TRACE=1)
+###    GOOD CASE rot=0 r=1.0 -- seam 11.514078 mm from the spine's end vertex
+[CHFI3D] ===== PerformFilletOnVertex Index=1 vertex=(25.000000, 19.347656, 10.000000)
+[CHFI3D]   stripes i=1  nba(sharp edges)=3  nondegenere=yes -> PerformOneCorner / PerformMoreSurfdata (nba<=3)
+[CHFI3D] ENTER PerformOneCorner Index=1 vertex=(25.000000, 19.347656, 10.000000)
+[CHFI3D]   isfirst=yes  spine status=2  onsame=no
+[CHFI3D]   --- corner curve between fillet and face at end ---
+[CHFI3D]   onsame=no IFadArc=1 IFopArc=2 inters=yes
+[CHFI3D]   face at end (Bs) = Geom_CylindricalSurface  uperiodic=YES uperiod=6.283185307  bounds u[0.000000 6.283185] v[-20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000 20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000]
+[CHFI3D]   BEFORE recale: pfac1=(4.605818022, 6.707106747) pfac2=(4.818959934, 6.707106780) du=0.213141912
+[CHFI3D]   |du|=0.213141912 <= half period 3.141592654 : no seam jump
+[CHFI3D]   AFTER  recale: pfac1=(4.605818022, 6.707106747) pfac2=(4.818959934, 6.707106780) du=0.213141912
+[CHFI3D]   corner curve built: param [0.000000000, 1.000000000]
+[CHFI3D]   its pcurve on the face at end: u 4.605818027 -> 4.818959933 (span 0.213141906)
+[CHFI3D]   ChFi3d_Couture: seam on face at end = YES
+[CHFI3D] ===== PerformFilletOnVertex Index=2 vertex=(25.000000, 25.718400, 10.000000)
+[CHFI3D]   stripes i=1  nba(sharp edges)=3  nondegenere=yes -> PerformOneCorner / PerformMoreSurfdata (nba<=3)
+[CHFI3D] ENTER PerformOneCorner Index=2 vertex=(25.000000, 25.718400, 10.000000)
+[CHFI3D]   isfirst=no  spine status=2  onsame=no
+[CHFI3D]   --- corner curve between fillet and face at end ---
+[CHFI3D]   onsame=no IFadArc=1 IFopArc=2 inters=yes
+[CHFI3D]   face at end (Bs) = Geom_Plane  uperiodic=no uperiod=0.000000000  bounds u[-20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000 20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000] v[-20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000 20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000]
+[CHFI3D]   BEFORE recale: pfac1=(10.000000000, 24.000000000) pfac2=(9.000000000, 25.000000000) du=-1.000000000
+[CHFI3D]   AFTER  recale: pfac1=(10.000000000, 24.000000000) pfac2=(9.000000000, 25.000000000) du=-1.000000000
+[CHFI3D]   corner curve built: param [0.000000000, 1.570796327]
+[CHFI3D]   its pcurve on the face at end: u 10.000000000 -> 9.000000000 (span 1.000000000)
+[CHFI3D]   ChFi3d_Couture: seam on face at end = no
+RESULT rot=0.000 r=1.000 dist=11.514078 status=OK valid=true vol=5848.105498 removed=+1.368076 analytic=1.367173 bop=clean secs=0.007
+
+###    BAD CASE rot=270 r=1.0 -- seam endpoint exactly ON the spine's end vertex
+[CHFI3D] ===== PerformFilletOnVertex Index=1 vertex=(25.000000, 19.347656, 10.000000)
+[CHFI3D]   stripes i=1  nba(sharp edges)=3  nondegenere=yes -> PerformOneCorner / PerformMoreSurfdata (nba<=3)
+[CHFI3D] ENTER PerformOneCorner Index=1 vertex=(25.000000, 19.347656, 10.000000)
+[CHFI3D]   isfirst=yes  spine status=2  onsame=no
+[CHFI3D]   --- corner curve between fillet and face at end ---
+[CHFI3D]   onsame=no IFadArc=1 IFopArc=2 inters=yes
+[CHFI3D]   face at end (Bs) = Geom_CylindricalSurface  uperiodic=YES uperiod=6.283185307  bounds u[0.000000 6.283185] v[-20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000 20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000]
+[CHFI3D]   BEFORE recale: pfac1=(6.176614355, 6.707106789) pfac2=(0.106570952, 6.707106787) du=-6.070043403
+[CHFI3D]   *** |du|=6.070043403 > half period 3.141592654 : THE TWO POINTS SIT ON OPPOSITE SIDES OF THE SEAM. onsame is FALSE so ChFi3d_Recale is SKIPPED. ***
+[CHFI3D]   AFTER  recale: pfac1=(6.176614355, 6.707106789) pfac2=(0.106570952, 6.707106787) du=-6.070043403
+[CHFI3D]   corner curve built: param [0.000000000, 1.000000000]
+[CHFI3D]   its pcurve on the face at end: u 6.176614355 -> 0.106570952 (span 6.070043403)
+[CHFI3D]   ChFi3d_Couture: seam on face at end = YES
+[CHFI3D] ===== PerformFilletOnVertex Index=2 vertex=(25.000000, 25.718400, 10.000000)
+[CHFI3D]   stripes i=1  nba(sharp edges)=3  nondegenere=yes -> PerformOneCorner / PerformMoreSurfdata (nba<=3)
+[CHFI3D] ENTER PerformOneCorner Index=2 vertex=(25.000000, 25.718400, 10.000000)
+[CHFI3D]   isfirst=no  spine status=2  onsame=no
+[CHFI3D]   --- corner curve between fillet and face at end ---
+[CHFI3D]   onsame=no IFadArc=1 IFopArc=2 inters=yes
+[CHFI3D]   face at end (Bs) = Geom_Plane  uperiodic=no uperiod=0.000000000  bounds u[-20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000 20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000] v[-20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000 20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000]
+[CHFI3D]   BEFORE recale: pfac1=(10.000000000, 24.000000000) pfac2=(9.000000000, 25.000000000) du=-1.000000000
+[CHFI3D]   AFTER  recale: pfac1=(10.000000000, 24.000000000) pfac2=(9.000000000, 25.000000000) du=-1.000000000
+[CHFI3D]   corner curve built: param [0.000000000, 1.570796327]
+[CHFI3D]   its pcurve on the face at end: u 10.000000000 -> 9.000000000 (span 1.000000000)
+[CHFI3D]   ChFi3d_Couture: seam on face at end = no
+RESULT rot=270.000 r=1.000 dist=0.000000 status=BROKEN_VOLUME_GREW valid=false vol=6224.444835 removed=-374.971265 analytic=1.367173 bop=DIRTY secs=0.013
+
+###    Note: 'ENTER PerformIntersectionAtEnd' never appears. nba=3, so the
+###    nba>3 branch at ChFi3d_Builder.cxx:690 is not taken. PerformOneCorner is.
+###    Note: 2*pi - 6.070043403 = 0.213141904 = the good case's du. Same arc,
+###    taken the long way round the cylinder.
+
+### 3. THE SAME BAD CASE AFTER THE ONE-LINE FIX
+###    ChFi3d_Recale moves pfac2 from 0.106570952 to 6.389756259.
+  base solid: volume 5849.473570  faces 8  edges 17  seams 2  valid true  BOP clean
+[CHFI3D] ===== PerformFilletOnVertex Index=1 vertex=(25.000000, 19.347656, 10.000000)
+[CHFI3D]   stripes i=1  nba(sharp edges)=3  nondegenere=yes -> PerformOneCorner / PerformMoreSurfdata (nba<=3)
+[CHFI3D] ENTER PerformOneCorner Index=1 vertex=(25.000000, 19.347656, 10.000000)
+[CHFI3D]   isfirst=yes  spine status=2  onsame=no
+[CHFI3D]   --- corner curve between fillet and face at end ---
+[CHFI3D]   onsame=no IFadArc=1 IFopArc=2 inters=yes
+[CHFI3D]   face at end (Bs) = Geom_CylindricalSurface  uperiodic=YES uperiod=6.283185307  bounds u[0.000000 6.283185] v[-20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000 20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000]
+[CHFI3D]   BEFORE recale: pfac1=(6.176614355, 6.707106789) pfac2=(0.106570952, 6.707106787) du=-6.070043403
+[CHFI3D]   *** |du|=6.070043403 > half period 3.141592654 : THE TWO POINTS SIT ON OPPOSITE SIDES OF THE SEAM. onsame is FALSE so ChFi3d_Recale is SKIPPED. ***
+[CHFI3D]   AFTER  recale: pfac1=(6.176614355, 6.707106789) pfac2=(6.389756259, 6.707106787) du=0.213141904
+[CHFI3D]   corner curve built: param [0.000000000, 1.000000000]
+[CHFI3D]   its pcurve on the face at end: u 6.176614355 -> 6.389756259 (span 0.213141904)
+[CHFI3D]   ChFi3d_Couture: seam on face at end = YES
+[CHFI3D] ===== PerformFilletOnVertex Index=2 vertex=(25.000000, 25.718400, 10.000000)
+[CHFI3D]   stripes i=1  nba(sharp edges)=3  nondegenere=yes -> PerformOneCorner / PerformMoreSurfdata (nba<=3)
+[CHFI3D] ENTER PerformOneCorner Index=2 vertex=(25.000000, 25.718400, 10.000000)
+[CHFI3D]   isfirst=no  spine status=2  onsame=no
+[CHFI3D]   --- corner curve between fillet and face at end ---
+[CHFI3D]   onsame=no IFadArc=1 IFopArc=2 inters=yes
+[CHFI3D]   face at end (Bs) = Geom_Plane  uperiodic=no uperiod=0.000000000  bounds u[-20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000 20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000] v[-20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000 20000000000000000318057822195198360936721617127890562779562655115495677544340762121626939971713630208.000000]
+[CHFI3D]   BEFORE recale: pfac1=(10.000000000, 24.000000000) pfac2=(9.000000000, 25.000000000) du=-1.000000000
+[CHFI3D]   AFTER  recale: pfac1=(10.000000000, 24.000000000) pfac2=(9.000000000, 25.000000000) du=-1.000000000
+[CHFI3D]   corner curve built: param [0.000000000, 1.570796327]
+[CHFI3D]   its pcurve on the face at end: u 10.000000000 -> 9.000000000 (span 1.000000000)
+[CHFI3D]   ChFi3d_Couture: seam on face at end = no
+  result: valid true  volume 5848.105494  removed +1.368076 mm3  BOP clean  fillet took 0.044 s
+  faces 8 -> 9, edges 17 -> 21
+RESULT rot=270.000 r=1.000 dist=0.000000 status=OK valid=true vol=5848.105494 removed=+1.368076 analytic=1.367173 bop=clean secs=0.044
+
+### 4. MAIN TABLE, BEFORE AND AFTER
+--- BEFORE (pristine kernel) ---
+rotDeg   radius   distVtx      status                 valid   volume         removed        analytic     secs     bop
+0        0.25     11.514078    OK                     true    5849.388121    +0.085453      0.085448     0.003    clean
+0        0.5      11.514078    OK                     true    5849.131723    +0.341850      0.341793     0.003    clean
+0        1.0      11.514078    OK                     true    5848.105498    +1.368076      1.367173     0.003    clean
+0        2.0      11.514078    OK                     true    5843.990406    +5.483168      5.468693     0.004    clean
+270      0.25     0.000000     BROKEN_WRONG_VOLUME    true    5849.420416    +0.053154      0.085448     0.012    DIRTY
+270      0.5      0.000000     BROKEN_WRONG_VOLUME    false   4953.892213    +895.581358    0.341793     0.012    DIRTY
+270      1.0      0.000000     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.010    DIRTY
+270      2.0      0.000000     BROKEN_VOLUME_GREW     false   6193.313396    -343.839826    5.468693     0.010    DIRTY
+--- AFTER (one-line fix) ---
+rotDeg   radius   distVtx      status                 valid   volume         removed        analytic     secs     bop
+0        0.25     11.514078    OK                     true    5849.388121    +0.085453      0.085448     0.003    clean
+0        0.5      11.514078    OK                     true    5849.131723    +0.341850      0.341793     0.004    clean
+0        1.0      11.514078    OK                     true    5848.105498    +1.368076      1.367173     0.004    clean
+0        2.0      11.514078    OK                     true    5843.990406    +5.483168      5.468693     0.003    clean
+270      0.25     0.000000     OK                     true    5849.388118    +0.085452      0.085448     0.007    clean
+270      0.5      0.000000     OK                     true    5849.131720    +0.341850      0.341793     0.007    clean
+270      1.0      0.000000     OK                     true    5848.105494    +1.368076      1.367173     0.008    clean
+270      2.0      0.000000     OK                     true    5843.990405    +5.483165      5.468693     0.010    clean
+
+### 5. BAND SWEEP rot 248..292 step 2, radii 0.25/0.5/1.0/2.0 -- 92 cases each
+--- BEFORE: status counts ---
+     15 BROKEN_VOLUME_GREW
+      9 BROKEN_WRONG_VOLUME
+     68 OK
+--- AFTER: status counts ---
+     92 OK
+
+### 6. THE CATASTROPHIC RADII, BEFORE -> AFTER
+rotDeg radius status               valid  removed          	| status               valid  removed          
+0     0.1   OK                   true   +0.013673        	| OK                   true   +0.013673        
+0     0.2   OK                   true   +0.054689        	| OK                   true   +0.054689        
+0     0.3   OK                   true   +0.123054        	| OK                   true   +0.123054        
+0     0.4   OK                   true   +0.218772        	| OK                   true   +0.218772        
+0     0.55  OK                   true   +0.413653        	| OK                   true   +0.413653        
+0     0.6   OK                   true   +0.492300        	| OK                   true   +0.492300        
+0     0.75  OK                   true   +0.769321        	| OK                   true   +0.769321        
+0     1.5   OK                   true   +3.080714        	| OK                   true   +3.080714        
+0     2.5   OK                   true   +8.580239        	| OK                   true   +8.580239        
+0     3.0   OK                   true   +12.378154       	| OK                   true   +12.378154       
+270   0.1   BROKEN_WRONG_VOLUME  false  +5681.576475     	| OK                   true   +0.013672        
+270   0.2   BROKEN_VOLUME_GREW   true   -2.387924        	| OK                   true   +0.054688        
+270   0.3   BROKEN_WRONG_VOLUME  true   +0.299703        	| OK                   true   +0.123053        
+270   0.4   BROKEN_WRONG_VOLUME  true   +0.507883        	| OK                   true   +0.218771        
+270   0.55  BROKEN_WRONG_VOLUME  false  +506449696.796158	| OK                   true   +0.413653        
+270   0.6   BROKEN_VOLUME_GREW   false  -424.381125      	| OK                   true   +0.492299        
+270   0.75  BROKEN_VOLUME_GREW   false  -399.211007      	| OK                   true   +0.769321        
+270   1.5   BROKEN_VOLUME_GREW   false  -288.789915      	| OK                   true   +3.080712        
+270   2.5   BROKEN_VOLUME_GREW   false  -355.722545      	| OK                   true   +8.580234        
+270   3.0   BROKEN_VOLUME_GREW   false  -367.447617      	| OK                   true   +12.378147       
+
+### 7. DOES THE refon1 ARGUMENT MATTER? Both extremes built and measured.
+--- refon1 = Standard_False, seam rows ---
+270      0.25     0.000000     OK                     true    5849.388118    +0.085452      0.085448     0.042    clean
+270      0.5      0.000000     OK                     true    5849.131720    +0.341850      0.341793     0.015    clean
+270      1.0      0.000000     OK                     true    5848.105494    +1.368076      1.367173     0.057    clean
+270      2.0      0.000000     OK                     true    5843.990405    +5.483165      5.468693     0.020    clean
+--- refon1 = Standard_True, seam rows ---
+270      0.25     0.000000     OK                     true    5849.388118    +0.085452      0.085448     0.016    clean
+270      0.5      0.000000     OK                     true    5849.131720    +0.341850      0.341793     0.010    clean
+270      1.0      0.000000     OK                     true    5848.105494    +1.368076      1.367173     0.016    clean
+270      2.0      0.000000     OK                     true    5843.990405    +5.483165      5.468693     0.019    clean
+(identical; the original expression (IFadArc == 1) was kept as the minimal change)
+
+### 8. REGRESSION BATTERY -- repro/cpp/fillet_regress.cpp, 40 cases
+###    OCCT's own suite needs DRAWEXE, which needs Tcl/Tk, which is not on this
+###    machine and is why Draw is OFF (docs/BUILD.md s.2). None of it was run.
+--- diff <pristine kernel> <patched kernel> ---
+(no output: the two runs are BYTE-IDENTICAL, 44 lines)
+
+--- the battery itself (identical under both kernels) ---
+fillet_regress on OCCT 7.8.1
+----------------------------------------------------------------------
+box/one-edge r=1                   done valid=true  vol=    5993.561944902 faces=  7 edges= 15 bop=clean
+box/one-edge r=3                   done valid=true  vol=    5942.057504117 faces=  7 edges= 15 bop=clean
+box/two-edges r=2                  done valid=true  vol=    5957.846595348 faces=  8 edges= 17 bop=clean
+box/three-at-corner                done valid=true  vol=    5956.543128088 faces=  9 edges= 21 bop=clean
+box/all-edges r=1                  done valid=true  vol=    5949.834793499 faces= 26 edges= 56 bop=clean
+box/all-edges r=2                  done valid=true  vol=    5804.696111128 faces= 26 edges= 56 bop=clean
+box/chamfer one                    done valid=true  vol=    5985.000000000 faces=  7 edges= 15 bop=clean
+box/chamfer all-ish                done valid=true  vol=    5968.682666667 faces= 10 edges= 20 bop=clean
+cylinder/all-edges r=1             done valid=true  vol=     772.516703442 faces=  5 edges=  7 bop=clean
+cylinder/one-rim r=2               done valid=true  vol=     760.839985708 faces=  4 edges=  5 bop=clean
+cylinder/one-rim r=0.5             done valid=true  vol=     783.750332709 faces=  4 edges=  5 bop=clean
+cone/all-edges r=0.5               done valid=true  vol=     231.979155197 faces=  5 edges=  7 bop=clean
+cone/all-edges r=1                 done valid=true  vol=     224.680369446 faces=  5 edges=  7 bop=clean
+cut/through-hole (base)            done valid=true  vol=    3497.345175426 faces=  7 edges= 15 bop=clean
+thruhole/rim r=0.5                 done valid=true  vol=    3496.808670834 faces=  8 edges= 18 bop=clean
+thruhole/rim r=1                   done valid=true  vol=    3495.199157060 faces=  8 edges= 18 bop=clean
+thruhole/all r=0.5                 done valid=true  vol=    3484.010425279 faces= 29 edges= 63 bop=clean
+cut/blind-hole (base)              done valid=true  vol=    3698.407105255 faces=  8 edges= 15 bop=clean
+blindhole/all r=0.5                done valid=true  vol=    3687.769121322 faces= 30 edges= 63 bop=clean
+blindhole/rim r=1                  done valid=true  vol=    3692.064920492 faces= 10 edges= 20 bop=clean
+fuse/step (base)                   done valid=true  vol=    5000.000000000 faces= 11 edges= 24 bop=clean
+fused/all r=1                      done valid=true  vol=    4950.437164610 faces= 51 edges=112 bop=clean
+fused/all r=2                      done valid=true  vol=    4809.515080015 faces= 51 edges=112 bop=clean
+fuse/cylindrical-boss (base)       done valid=true  vol=    4402.123859659 faces=  8 edges= 15 bop=clean
+boss/all r=0.5                     done valid=true  vol=    4391.636468504 faces= 30 edges= 63 bop=clean
+boss/foot r=1                      done valid=true  vol=    4393.731526865 faces= 11 edges= 22 bop=clean
+cut/slot-across-hole (base)        done valid=true  vol=    3480.021828441 faces= 14 edges= 39 bop=clean
+slotted/all r=0.3                  done valid=true  vol=    3475.094506065 faces= 76 edges=175 bop=clean
+slotted/few r=0.5                  done valid=true  vol=    3479.312388680 faces= 18 edges= 48 bop=clean
+slotted/few r=1                    done valid=true  vol=    3477.136134228 faces= 18 edges= 48 bop=clean
+smallhole r=0.6 fillet r=2.0       done valid=true  vol=    3816.431463632 faces= 29 edges= 63 bop=clean
+smallhole r=1.0 fillet r=2.0       done valid=true  vol=    3792.010444708 faces= 29 edges= 63 bop=clean
+smallhole r=1.5 fillet r=3.0       done valid=true  vol=    3526.519821185 faces= 29 edges= 63 bop=clean
+smallhole r=2.5 fillet r=4.0       NOTDONE
+bool/cut box-cyl                   done valid=true  vol=    3497.345175426 faces=  7 edges= 15 bop=clean
+bool/fuse box-cyl                  done valid=true  vol=    4351.858377202 faces=  8 edges= 15 bop=clean
+bool/common box-cyl                done valid=true  vol=     502.654824574 faces=  3 edges=  3 bop=clean
+bool/cut box-box                   done valid=true  vol=    3500.000000000 faces= 11 edges= 24 bop=clean
+bool/common sph-box                done valid=true  vol=      99.745566737 faces=  7 edges= 15 bop=clean
+bool/cut torus-box                 done valid=true  vol=     246.978382147 faces=  4 edges=  6 bop=clean
+----------------------------------------------------------------------
+end
+
+### 9. BLAST RADIUS, COUNTED over the battery with the instrumented build
+PerformOneCorner entries : 26
+corner curves computed   : 26
+periodic face at end     : 0
+seam jump |du|>half per  : 0
+onsame=YES occurrences   : 0
+(same count on the seam fixture bad case: 1)
+
+### 10. THE WHOLE CHANGE, as a diff against pristine OCCT 7.8.1
+--- build/occt-src-orig/ChFi3d_Builder_C1.cxx	2026-09-12 03:06:52.429936300 +0700
++++ /c/dev/occt-fix/src/ChFi3d/ChFi3d_Builder_C1.cxx	2026-09-12 03:26:59.249878800 +0700
+@@ -804,7 +804,18 @@
+     else {
+       pfil2 = Fi2.PCurveOnSurf()->Value(Fi2.Parameter(!isfirst));
+     }
+-    if (onsame) ChFi3d_Recale(Bs,pfac1,pfac2,(IFadArc == 1));
++    // ------------------------------------------------------------------
++    // seam-fillet fix, 2026-09-12.
++    // pfac1 and pfac2 are two 2d points on the SAME face surface Bs. When that
++    // surface is periodic they can come out on opposite branches of u (u and
++    // u+2pi are the same 3d point, so no downstream check notices), and then
++    // Pardeb/Parfin describe the long way round the cylinder instead of the
++    // short arc. ChFi3d_Recale is the helper that normalises exactly this.
++    // It was called only in the `onsame` case; the seam defect happens with
++    // onsame == false, where it was skipped. IntersectMoreCorner (the sibling
++    // routine) already calls it unconditionally.
++    ChFi3d_Recale(Bs,pfac1,pfac2,(IFadArc == 1));
++    // ------------------------------------------------------------------
+ 
+     Pardeb(1)= pfil1.X(); Pardeb(2) = pfil1.Y();
+     Pardeb(3)= pfac1.X(); Pardeb(4) = pfac1.Y();
+
+### 11. BUILD COST (measured)
+cmake configure of the private tree                : 30 s
+TKFillet from scratch, 114 files, 12 cores         : 24 s
+TKFillet incremental, 2 changed files              : 8 s
+all 18 toolkits, 2161 files                        : 409 s
