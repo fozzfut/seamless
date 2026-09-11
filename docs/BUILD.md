@@ -301,3 +301,166 @@ set (CMAKE_CONFIGURATION_TYPES Release Debug RelWithDebInfo CACHE INTERNAL "" FO
 
 Собранные DLL лежат в `win64/vc14/bin`. Этот каталог должен быть в `PATH`
 (или DLL — рядом с exe), иначе программа не стартует.
+
+---
+
+## Результат полной сборки (12.09.2026, 02:33–02:40)
+
+### Команда
+
+Запускалась из PowerShell, в фоне, отсоединённым процессом (`Start-Process
+-WindowStyle Hidden`), лог писался в файл:
+
+```powershell
+& 'C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe' `
+    --build C:/dev/seamless/build/occt-release --config Release --parallel 12
+```
+
+Флаги MSBuild (`/m:12`, `/v:minimal`) отдельно **не передавались**: `--parallel 12`
+достаточно, а слэш-флаги ломаются, если запускать сборку через Bash-инструмент
+(MSYS превращает `/m:12` в путь, MSBuild отвечает `error MSB1008`).
+
+### Тайминги и итог
+
+| Показатель | Значение | Чем измерено |
+|---|---|---|
+| Старт | 2026-09-12T02:33:32 | `build-all.status` |
+| Финиш | 2026-09-12T02:39:43 | `build-all.status` |
+| Стена | **371,53 с (6 мин 11,5 с)** | `Stopwatch` вокруг `cmake --build` |
+| Код возврата | **0** | `EXIT 0` в `build-all.status` |
+| `error C####` | 0 | `grep -c -E "error C[0-9]+"` по логу |
+| `error LNK` | 0 | `grep -c "error LNK"` |
+| `error MSB` | 0 | `grep -c "error MSB"` |
+| warning | 0 | `grep -ci warning` |
+
+`TKernel` к началу этого прогона уже был собран (проверка тулчейна, 18,6 с),
+поэтому 371,53 с — это 17 тулкитов; полная сборка «с нуля» ≈ 390 с.
+
+### Что получилось и где лежит
+
+* **18 DLL** — `C:/dev/seamless/build/occt-release/win64/vc14/bin/` (29 МБ)
+* **18 import-библиотек `.lib`** — `C:/dev/seamless/build/occt-release/win64/vc14/lib/` (18 МБ)
+* **3656 заголовков** — `C:/dev/seamless/build/occt-release/inc/`
+
+```
+TKBO.dll       1950208    TKG3d.dll       878080    TKMesh.dll      602112
+TKBRep.dll      860672    TKGeomAlgo.dll 3800064    TKOffset.dll   1866240
+TKBool.dll     3449856    TKGeomBase.dll 3840512    TKPrim.dll      288768
+TKFeat.dll     1059840    TKHLR.dll       892928    TKShHealing.dll 2478592
+TKFillet.dll   2137600    TKMath.dll     1619968    TKTopAlgo.dll  2262016
+TKG2d.dll       276480    TKXMesh.dll      12288    TKernel.dll    1632256
+```
+
+### Диск
+
+| Момент | Свободно на C: | Чем измерено |
+|---|---|---|
+| до сборки | 30 ГБ | `df -h /c` → `30G` |
+| через 3 мин сборки | 30257 МБ | `df -m /c` |
+| после сборки | 29634 МБ | `df -m /c` |
+
+Дерево сборки выросло с 28 МБ до **476 МБ** (`du -sm`), то есть сборка стоила
+448 МБ. Порог остановки (5 ГБ) не приближался.
+
+---
+
+## Проверка: ядро действительно пригодно
+
+Это не отчёт о сборке, а доказательство. `repro/kernel-smoke/kernel_smoke.cpp`
+строит коробку, строит цилиндр, вычитает один из другого, скругляет обычное
+ребро и печатает объём и валидность. Все объёмы известны аналитически заранее.
+
+Валидность печатается **двумя** способами, и это принципиально: `BRepCheck_Analyzer`
+— это то, что за кулисами дёргает `Shape.isValid()` во FreeCAD, а `BRepAlgoAPI_Check`
+— BOP-проверка (мелкие рёбра + самопересечения). В дефекте, ради которого заведён
+проект, они расходятся.
+
+### Точная строка компиляции и линковки (работает на этой машине)
+
+Сначала окружение — **без** `vcvars64.bat`, чтобы ничего не запускало `cmd.exe`:
+
+```powershell
+$MSVC   = 'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532'
+$SDK    = 'C:\Program Files (x86)\Windows Kits\10'
+$SDKVER = '10.0.22000.0'
+$OCCT   = 'C:\dev\seamless\build\occt-release'
+
+$env:INCLUDE = "$MSVC\include;$SDK\Include\$SDKVER\ucrt;$SDK\Include\$SDKVER\um;$SDK\Include\$SDKVER\shared"
+$env:LIB     = "$MSVC\lib\x64;$SDK\Lib\$SDKVER\ucrt\x64;$SDK\Lib\$SDKVER\um\x64"
+$env:PATH    = "$MSVC\bin\Hostx64\x64;$OCCT\win64\vc14\bin;$env:PATH"
+```
+
+Затем сама строка — ровно та, что отработала:
+
+```
+cl.exe /nologo /EHsc /std:c++17 /MD /O2 /W3
+       /IC:\dev\seamless\build\occt-release\inc
+       C:\dev\seamless\repro\kernel-smoke\kernel_smoke.cpp
+       /Fo:C:\dev\seamless\build\kernel-smoke\
+       /Fe:C:\dev\seamless\build\kernel-smoke\kernel_smoke.exe
+       /link /LIBPATH:C:\dev\seamless\build\occt-release\win64\vc14\lib
+       TKernel.lib TKMath.lib TKG2d.lib TKG3d.lib TKGeomBase.lib
+       TKGeomAlgo.lib TKBRep.lib TKTopAlgo.lib TKPrim.lib TKBO.lib
+       TKBool.lib TKShHealing.lib TKFillet.lib TKOffset.lib TKFeat.lib
+       TKMesh.lib TKXMesh.lib TKHLR.lib
+```
+
+`cl EXIT=0, elapsed=1.51 s`. Всё это завёрнуто в
+`build-scripts/build-kernel-smoke.ps1` — скрипт компилирует, линкует и запускает:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\dev\seamless\build-scripts\build-kernel-smoke.ps1
+```
+
+Важное про `/MD`: OCCT собран в Release с динамической CRT, приложение обязано
+быть таким же. `/MT` даст две копии CRT и падение на первом же исключении OCCT.
+
+### Что напечатала программа
+
+```
+OCCT linked into this binary: OCC_VERSION_COMPLETE = 7.8.1
+
+box 40x30x20           volume =   24000.000000   expected =   24000.000000   delta = +3.638e-12
+                       faces =   6  edges =  12  vertices =   8
+                       BRepCheck_Analyzer.IsValid = true   BRepAlgoAPI_Check.IsValid = true
+
+cylinder r6 h20        volume =    2261.946711   expected =    2261.946711   delta = +0.000e+00
+                       faces =   3  edges =   3  vertices =   2
+                       BRepCheck_Analyzer.IsValid = true   BRepAlgoAPI_Check.IsValid = true
+
+box - cylinder         volume =   21738.053289   expected =   21738.053289   delta = +3.638e-12
+                       faces =   7  edges =  15  vertices =  10
+                       BRepCheck_Analyzer.IsValid = true   BRepAlgoAPI_Check.IsValid = true
+
+fillet r3 on 1 edge    volume =   21699.424959   expected =   21699.424959   delta = +7.276e-12
+                       faces =   8  edges =  18  vertices =  12
+                       BRepCheck_Analyzer.IsValid = true   BRepAlgoAPI_Check.IsValid = true
+
+fillet removed 38.628331 mm3 (analytic 38.628331 mm3)
+
+RESULT: PASS (relative volume error 3.353e-16, tolerance 1e-9)
+```
+
+Скругление сняло 38,628331 мм³ при аналитических (9 − 2,25·π)·20 = 38,628331 мм³.
+Объём считается адаптивным интегрированием (`BRepGProp::VolumeProperties(S, P, 1e-11)`),
+достигнутая относительная погрешность — 4,7e-16, так что сходимость до 1e-12 мм³
+это свойство ядра, а не слабый допуск.
+
+### Что это доказывает
+
+* Заголовки из `inc/` разрешаются, `.lib` линкуются, `.dll` грузятся.
+* Программа запущена с `PATH`, где лежат **только** `...\occt-release\win64\vc14\bin`
+  и `C:\Windows\System32` — и отработала с кодом 0. То есть используются
+  свежесобранные DLL, а не чьи-то ещё. (`C:\Program Files\FreeCAD 1.1\bin`
+  в машинном `PATH` вообще отсутствует — проверено.)
+* `dumpbin /dependents` по exe: прямые импорты — `TKernel, TKMath, TKG3d, TKBRep,
+  TKTopAlgo, TKPrim, TKBO, TKFillet`. Транзитивное замыкание по DLL — **13** из 18:
+  добавляются `TKBool, TKG2d, TKGeomAlgo, TKGeomBase, TKShHealing`. Остальные пять
+  (`TKFeat, TKHLR, TKMesh, TKOffset, TKXMesh`) этой программе не нужны, но собраны.
+
+### Результат в файле
+
+Программа принимает необязательный аргумент — путь, куда записать итоговую форму
+в формате BREP: `C:\dev\seamless\build\kernel-smoke\kernel_smoke_result.brep`
+(4758 байт, заголовок `CASCADE Topology V3`). Это удобно, чтобы потом открыть
+результат во FreeCAD и сравнить глазами.
