@@ -1,0 +1,40 @@
+Subject: [PATCH] ChFi3d: apply the periodic reconciliation at every corner, not
+ only in the OnSame state
+
+PerformOneCorner assembles two 2d points on the face at the end of the fillet
+(pfac1, pfac2) and hands them to ChFi3d_ComputeCurves as Pardeb(3)/Parfin(3).
+When that face is periodic and the corner vertex sits on the seam, the two
+points come off the two different pcurve branches of the seam (u = 0 and
+u = 2*pi). ChFi3d_Recale exists precisely to put them back on a common branch,
+but here it is called only when the stripe is in the ChFiDS_OnSame state.
+
+The sibling function IntersectMoreCorner performs the identical computation and
+calls ChFi3d_Recale unconditionally (ChFi3d_Builder_C1.cxx:4031); the word
+"onsame" does not appear in it at all.
+
+ChFi3d_Recale is self-guarding: it does nothing unless the surface is U- or
+V-periodic (ChFi3d_Builder_C1.cxx:447, 458), and even then only when the two
+points are more than half a period apart (:451, :462). Dropping the guard is
+therefore a no-op everywhere except the case it is meant to fix.
+
+Measured on the owner's minimal pair (repro/cpp/seam_fillet_repro.cpp), fillet
+radius 1.0, seam distance 0.000000 mm:
+
+  before:  IsDone yes, Valid NO, volume 6224.4449, removed -374.9713, BOP DIRTY
+  after:   IsDone yes, Valid yes, volume 5848.1055, removed +1.3681, BOP clean
+           (analytic 1.3672)
+
+The ten rows of the same sweep whose seam is far from the edge are unchanged,
+byte for byte, at radii 0.25 / 0.5 / 0.55 / 1.0 / 2.0 / 3.0.
+
+--- a/src/ChFi3d/ChFi3d_Builder_C1.cxx
++++ b/src/ChFi3d/ChFi3d_Builder_C1.cxx
+@@ -804,7 +804,7 @@
+     else {
+       pfil2 = Fi2.PCurveOnSurf()->Value(Fi2.Parameter(!isfirst));
+     }
+-    if (onsame) ChFi3d_Recale(Bs,pfac1,pfac2,(IFadArc == 1));
++    ChFi3d_Recale(Bs,pfac1,pfac2,(IFadArc == 1));
+ 
+     Pardeb(1)= pfil1.X(); Pardeb(2) = pfil1.Y();
+     Pardeb(3)= pfac1.X(); Pardeb(4) = pfac1.Y();
