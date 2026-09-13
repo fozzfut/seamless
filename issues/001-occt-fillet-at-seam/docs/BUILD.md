@@ -464,3 +464,26 @@ RESULT: PASS (relative volume error 3.353e-16, tolerance 1e-9)
 в формате BREP: `C:\dev\freecad-kernel-fixes\build\kernel-smoke\kernel_smoke_result.brep`
 (4758 байт, заголовок `CASCADE Topology V3`). Это удобно, чтобы потом открыть
 результат во FreeCAD и сравнить глазами.
+
+## После переезда папки (13 сентября 2026)
+
+Проект переехал из `C:\dev\seamless` в `C:\dev\freecad-kernel-fixes`. Каталоги сборки CMake хранят
+абсолютный путь в `CMakeCache.txt` (`CMAKE_CACHEFILE_DIR`), и с таким кешем CMake работать отказывается.
+Лечится сбросом кеша и повторной конфигурацией; исходники трогать не нужно.
+
+Проверено на дереве `build/occt-cond` (исходники `C:/dev/occt-cond` не переезжали):
+
+```bash
+B=/c/dev/freecad-kernel-fixes/build/occt-cond
+mv "$B/CMakeCache.txt" "$B/CMakeCache.txt.old-path.bak"
+rm -rf "$B/CMakeFiles"
+powershell -ExecutionPolicy Bypass -File build-scripts/configure-occt-cond.ps1   # EXIT 0, 46.00 s
+powershell -ExecutionPolicy Bypass -File build-scripts/build-occt-cond.ps1 -Target TKernel   # EXIT 0, 28.95 s, 0 ошибок
+```
+
+Остальные три дерева — `build/occt-release`, `build/occt-e9`, `build/occt-fix` — по-прежнему помнят
+старый путь и перед следующим использованием требуют того же сброса своим скриптом конфигурации.
+У `occt-release` исходники лежали в `C:/dev/seamless/occt`, теперь это `C:/dev/freecad-kernel-fixes/occt`.
+
+Проверенная патченая библиотека, которую ставит `install-into-freecad.ps1`, лежит отдельной копией в
+`build/bin-cond` и от пересборки не зависит: её md5 `4e89e519…` после этой проверки не изменился.
