@@ -9,19 +9,26 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 REPORT="$(python -c 'import tempfile, os; print(os.path.join(tempfile.gettempdir(), "rim_fillet_cases.txt"))')"
 rm -f "$REPORT"
 
-run() {  # run <label> VAR=value ...
-    local label="$1"; shift
-    env "$@" timeout -k 5 120 "$FC" "$HERE/rim_fillet_case.py" >/dev/null 2>&1
+run() {  # run <script> <label> VAR=value ...
+    local script="$1" label="$2"; shift 2
+    env "$@" timeout -k 5 120 "$FC" "$HERE/$script" >/dev/null 2>&1
     [ $? -eq 124 ] && echo "$label TIMEOUT 120 s" >> "$REPORT"
 }
 
 echo "TKFillet.dll md5: $(md5sum "$(dirname "$FC")/TKFillet.dll" | cut -c1-8)"
 for angle in 0 90; do
     for r in 0.1 0.25 0.5 1.0; do
-        run "AngleXU=$angle r=$r" RIM_ANGLE=$angle RIM_R=$r
+        run rim_fillet_case.py "AngleXU=$angle r=$r" RIM_ANGLE=$angle RIM_R=$r
     done
 done
 for r in 0.25 0.5 1.0; do
-    run "shallower r=$r" RIM_SHALLOWER=1.0 RIM_R=$r
+    run rim_fillet_case.py "shallower r=$r" RIM_SHALLOWER=1.0 RIM_R=$r
+done
+# The workaround: the fillet built as a ring. Control first (the kernel can fillet it), then the part.
+for r in 0.25 0.5 1.0; do
+    run ring_fillet_case.py "ring shallower r=$r" RIM_SHALLOWER=1.0 RIM_R=$r
+done
+for r in 0.25 0.3 0.35 0.5 1.0 2.0; do
+    run ring_fillet_case.py "ring r=$r" RIM_ROUTE=extend RIM_R=$r
 done
 cat "$REPORT"
