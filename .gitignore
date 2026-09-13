@@ -18,3 +18,5 @@ __pycache__/
 .hist_*.json
 # установленный SDK патченого ядра: артефакт сборки, пересоздаётся build-scripts, в git не кладётся
 install/
+# вывод пробы ядра, пишется скриптом при каждом запуске
+build-scripts/verify-seam-fillet.txt
