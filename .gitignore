@@ -19,6 +19,6 @@ __pycache__/
 # установленный SDK патченого ядра: артефакт сборки, пересоздаётся build-scripts, в git не кладётся
 install/
 # вывод пробы ядра, пишется скриптом при каждом запуске
-build-scripts/verify-seam-fillet.txt
+issues/001-occt-fillet-at-seam/build-scripts/verify-seam-fillet.txt
 # результаты скриптов разбора фикстур, пересоздаются при запуске
-fixtures/*.txt
+issues/*/fixtures/*.txt

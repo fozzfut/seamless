@@ -1,0 +1,153 @@
+edge9_output.txt -- the raw output behind docs/REAL_PART.md, 12 September 2026.
+The owner's own part, edge Edge9, two kernels differing by one line of ChFi3d_Builder_C1.cxx.
+
+==============================================================================
+0. PROVENANCE
+==============================================================================
+$ dumpbin /dependents edge9_fillet.exe
+    TKBO.dll TKBRep.dll TKernel.dll TKFillet.dll TKG3d.dll TKMath.dll TKTopAlgo.dll
+    MSVCP140.dll KERNEL32.dll VCRUNTIME140.dll VCRUNTIME140_1.dll api-ms-win-crt-*
+  -> not one FreeCAD DLL among the imports
+
+$ [Environment]::GetEnvironmentVariable('PATH','Machine') -like '*FreeCAD*'   ->  False
+$ [Environment]::GetEnvironmentVariable('PATH','User')    -like '*FreeCAD*'   ->  False
+
+stock   TKFillet.dll  md5 e4d907a291bf4a354c537fcfaa9ebf54
+patched TKFillet.dll  md5 9437d44e8d942f04aee807e5c78c605e
+the other 12 DLLs are byte-identical between the two kernel directories.
+
+==============================================================================
+1. THE SHAPE, read back by the C++ program (PATH = kernel dir + System32 only)
+==============================================================================
+OCCT 7.8.1 -- the owner part, radius 1.0000
+  brep = C:/path/to/temp/claude/c--Program-Files-FreeCAD-1-1/90e2ee8a-0198-4b2f-ae54-0503653173cc/scratchpad/edge9/body_tip.brep
+  base solid: volume 5456.580740  faces 11  edges 28  valid true  BOP clean
+  target edge: OCCT index 9 (FreeCAD Edge9)  length 6.370619  dist(seam) 0.000000000
+  analytic volume a correct fillet must REMOVE: 1.367147 mm3  -> ideal result 5455.213593
+(full --probe listing of all 28 edges is reproducible with:
+   edge9_fillet.exe --brep body_tip.brep --probe )
+  edge  3  len  9.000000  (24.999945, 19.347782, 10.000000) -> (18.635984, 19.347782, 3.636039)  SEAM
+  edge  9  len  6.370619  (24.999945, 19.347782, 10.000000) -> (24.999945, 25.718401, 10.000000)
+
+==============================================================================
+2. RADIUS SWEEP -- STOCK KERNEL
+==============================================================================
+kernel   = C:/dev/freecad-kernel-fixes/build/kernel-e9-stock
+TKFillet = e4d907a291bf4a354c537fcfaa9ebf54
+exe      = C:/dev/freecad-kernel-fixes/build/edge9/edge9_fillet.exe
+deadline = 300 s per radius
+
+radius   status    isValid                  volume   delta          wall           bop        label
+0.1      BROKEN_WRONG_VOLUME false                    -142.297918 -5598.878658   0.214s         DIRTY,NotValid.x1,SelfIntersect.x210,TooSmallEdge.x14 stock
+0.25     BROKEN_WRONG_VOLUME true                     5456.558518 -0.022222      0.234s         DIRTY,SelfIntersect.x124,TooSmallEdge.x14 stock
+0.45     BROKEN_WRONG_VOLUME false                    4595.280606 -861.300134    0.230s         DIRTY,NotValid.x1,SelfIntersect.x210,TooSmallEdge.x14 stock
+0.5      TIMEOUT   -                        -        -              304.563s       -          stock
+0.55     TIMEOUT   -                        -        -              301.753s       -          stock
+1.0      BROKEN_VOLUME_GREW false                    6053.913015 +597.332276    0.198s         DIRTY,NotValid.x1,SelfIntersect.x107,TooSmallEdge.x10 stock
+2.0      BROKEN_VOLUME_GREW false                    6034.594808 +578.014068    0.191s         DIRTY,NotValid.x1,SelfIntersect.x108,TooSmallEdge.x10 stock
+
+per-radius logs: C:/dev/freecad-kernel-fixes/build/edge9/logs-stock
+delta is volume(result) - volume(base); a POSITIVE delta means the fillet ADDED
+material, which no fillet can do.
+
+==============================================================================
+3. RADIUS SWEEP -- PATCHED KERNEL
+==============================================================================
+kernel   = C:/dev/freecad-kernel-fixes/build/kernel-e9-fix
+TKFillet = 9437d44e8d942f04aee807e5c78c605e
+exe      = C:/dev/freecad-kernel-fixes/build/edge9/edge9_fillet.exe
+deadline = 300 s per radius
+
+radius   status    isValid                  volume   delta          wall           bop        label
+0.1      OK        true                     5456.567068 -0.013672      0.269s         clean      patched
+0.25     OK        true                     5456.495289 -0.085450      0.189s         clean      patched
+0.45     OK        true                     5456.303855 -0.276884      0.195s         clean      patched
+0.5      OK        true                     5456.238896 -0.341843      0.195s         clean      patched
+0.55     OK        true                     5456.167095 -0.413645      0.194s         clean      patched
+1.0      OK        true                     5455.212690 -1.368049      0.191s         clean      patched
+2.0      OK        true                     5451.097682 -5.483058      0.191s         clean      patched
+
+per-radius logs: C:/dev/freecad-kernel-fixes/build/edge9/logs-patched
+delta is volume(result) - volume(base); a POSITIVE delta means the fillet ADDED
+material, which no fillet can do.
+
+==============================================================================
+4. PER-RADIUS DETAIL, r = 1.0
+==============================================================================
+--- stock ---
+OCCT 7.8.1 -- the owner part, radius 1.0000
+  brep = C:/path/to/temp/claude/c--Program-Files-FreeCAD-1-1/90e2ee8a-0198-4b2f-ae54-0503653173cc/scratchpad/edge9/body_tip.brep
+  base solid: volume 5456.580740  faces 11  edges 28  valid true  BOP clean
+  target edge: OCCT index 9 (FreeCAD Edge9)  length 6.370619  dist(seam) 0.000000000
+  analytic volume a correct fillet must REMOVE: 1.367147 mm3  -> ideal result 5455.213593
+  ... calling BRepFilletAPI_MakeFillet (a hang here IS the measurement) ...
+  result: valid FALSE  volume 6053.913015  delta +597.332276  removed -597.332276 mm3  BOP DIRTY,NotValid.x1,SelfIntersect.x107,TooSmallEdge.x10  fillet took 0.016 s
+  faces 11 -> 12, edges 28 -> 30
+RESULT r=1.0000 status=BROKEN_VOLUME_GREW valid=false vol=6053.913015 delta=+597.332276 removed=-597.332276 analytic=1.367147 ideal=5455.213593 bop=DIRTY,NotValid.x1,SelfIntersect.x107,TooSmallEdge.x10 secs=0.016
+--- patched ---
+OCCT 7.8.1 -- the owner part, radius 1.0000
+  brep = C:/path/to/temp/claude/c--Program-Files-FreeCAD-1-1/90e2ee8a-0198-4b2f-ae54-0503653173cc/scratchpad/edge9/body_tip.brep
+  base solid: volume 5456.580740  faces 11  edges 28  valid true  BOP clean
+  target edge: OCCT index 9 (FreeCAD Edge9)  length 6.370619  dist(seam) 0.000000000
+  analytic volume a correct fillet must REMOVE: 1.367147 mm3  -> ideal result 5455.213593
+  ... calling BRepFilletAPI_MakeFillet (a hang here IS the measurement) ...
+  result: valid true  volume 5455.212690  delta -1.368049  removed +1.368049 mm3  BOP clean  fillet took 0.015 s
+  faces 11 -> 12, edges 28 -> 32
+RESULT r=1.0000 status=OK valid=true vol=5455.212690 delta=-1.368049 removed=+1.368049 analytic=1.367147 ideal=5455.213593 bop=clean secs=0.015
+
+==============================================================================
+5. THE TWO HUNG RADII, stock, as far as they got before the deadline killed them
+==============================================================================
+--- stock r = 0.5 (killed at 304.563 s) ---
+OCCT 7.8.1 -- the owner part, radius 0.5000
+  brep = C:/path/to/temp/claude/c--Program-Files-FreeCAD-1-1/90e2ee8a-0198-4b2f-ae54-0503653173cc/scratchpad/edge9/body_tip.brep
+  base solid: volume 5456.580740  faces 11  edges 28  valid true  BOP clean
+  target edge: OCCT index 9 (FreeCAD Edge9)  length 6.370619  dist(seam) 0.000000000
+  analytic volume a correct fillet must REMOVE: 0.341787 mm3  -> ideal result 5456.238953
+  ... calling BRepFilletAPI_MakeFillet (a hang here IS the measurement) ...
+--- stock r = 0.55 (killed at 301.753 s) ---
+OCCT 7.8.1 -- the owner part, radius 0.5500
+  brep = C:/path/to/temp/claude/c--Program-Files-FreeCAD-1-1/90e2ee8a-0198-4b2f-ae54-0503653173cc/scratchpad/edge9/body_tip.brep
+  base solid: volume 5456.580740  faces 11  edges 28  valid true  BOP clean
+  target edge: OCCT index 9 (FreeCAD Edge9)  length 6.370619  dist(seam) 0.000000000
+  analytic volume a correct fillet must REMOVE: 0.413562 mm3  -> ideal result 5456.167178
+  ... calling BRepFilletAPI_MakeFillet (a hang here IS the measurement) ...
+--- patched r = 0.5 ---
+OCCT 7.8.1 -- the owner part, radius 0.5000
+  brep = C:/path/to/temp/claude/c--Program-Files-FreeCAD-1-1/90e2ee8a-0198-4b2f-ae54-0503653173cc/scratchpad/edge9/body_tip.brep
+  base solid: volume 5456.580740  faces 11  edges 28  valid true  BOP clean
+  target edge: OCCT index 9 (FreeCAD Edge9)  length 6.370619  dist(seam) 0.000000000
+  analytic volume a correct fillet must REMOVE: 0.341787 mm3  -> ideal result 5456.238953
+  ... calling BRepFilletAPI_MakeFillet (a hang here IS the measurement) ...
+  result: valid true  volume 5456.238896  delta -0.341843  removed +0.341843 mm3  BOP clean  fillet took 0.016 s
+  faces 11 -> 12, edges 28 -> 32
+RESULT r=0.5000 status=OK valid=true vol=5456.238896 delta=-0.341843 removed=+0.341843 analytic=0.341787 ideal=5456.238953 bop=clean secs=0.016
+--- patched r = 0.55 ---
+OCCT 7.8.1 -- the owner part, radius 0.5500
+  brep = C:/path/to/temp/claude/c--Program-Files-FreeCAD-1-1/90e2ee8a-0198-4b2f-ae54-0503653173cc/scratchpad/edge9/body_tip.brep
+  base solid: volume 5456.580740  faces 11  edges 28  valid true  BOP clean
+  target edge: OCCT index 9 (FreeCAD Edge9)  length 6.370619  dist(seam) 0.000000000
+  analytic volume a correct fillet must REMOVE: 0.413562 mm3  -> ideal result 5456.167178
+  ... calling BRepFilletAPI_MakeFillet (a hang here IS the measurement) ...
+  result: valid true  volume 5456.167095  delta -0.413645  removed +0.413645 mm3  BOP clean  fillet took 0.016 s
+  faces 11 -> 12, edges 28 -> 32
+RESULT r=0.5500 status=OK valid=true vol=5456.167095 delta=-0.413645 removed=+0.413645 analytic=0.413562 ideal=5456.167178 bop=clean secs=0.016
+
+==============================================================================
+6. CROSS-CHECK: the same two solids read back by FreeCAD on its OWN stock DLLs
+==============================================================================
+$ "C:/Program Files/FreeCAD 1.1/bin/FreeCADCmd.exe" repro/python/14_verify_edge9_result.py
+
+==============================================================================
+what the two kernels produced, checked by FreeCAD
+==============================================================================
+  base volume  = 5456.580740 mm3
+  ideal at r=1 = 5455.213593 mm3  (analytic removal 1.367147)
+
+  base (as exported)         faces = 11  edges = 28  solids = 1  isValid = True  volume =    5456.580614
+                             delta vs base = -0.000126   distance from ideal = +1.367021   check(True) = clean
+  r = 1.0, STOCK kernel      faces = 12  edges = 30  solids = 1  isValid = False volume =    6053.912936
+                             delta vs base = +597.332196   distance from ideal = +598.699343   check(True) = RAISED Bad orientation of sub-shape x1, No error x2
+  r = 1.0, PATCHED kernel    faces = 12  edges = 32  solids = 1  isValid = True  volume =    5455.212548
+                             delta vs base = -1.368192   distance from ideal = -0.001045   check(True) = clean
+

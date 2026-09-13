@@ -1,0 +1,229 @@
+seam_fillet -- measured output, OCCT 7.8.1 built from source in build/occt-release
+date: 2026-09-12T02:55:09+07:00   host: 12 cores / 16 GB / Windows 10 x64
+no FreeCAD DLL is loaded at any point; see section 0
+
+==============================================================================
+0. PROVENANCE -- which OCCT is this?
+==============================================================================
+$ dumpbin /dependents seam_fillet.exe   (OCCT imports only)
+    TKernel.dll
+    TKMath.dll
+    TKG2d.dll
+    TKG3d.dll
+    TKBRep.dll
+    TKTopAlgo.dll
+    TKPrim.dll
+    TKBO.dll
+    TKFillet.dll
+
+$ [Environment]::GetEnvironmentVariable('PATH','Machine') -like '*FreeCAD*'
+False    <- FreeCAD's bin cannot have supplied any DLL
+
+$ PATH='...build\occt-release\win64\vc14\bin;C:\Windows\System32' seam_fillet.exe --case --rot 270 --radius 1.0
+OCCT 7.8.1 -- case rot = 270.000 deg, fillet radius = 1.000
+RESULT rot=270.000 r=1.000 dist=0.000000 status=BROKEN_VOLUME_GREW valid=false vol=6224.444835 removed=-374.971265 analytic=1.367173 bop=DIRTY secs=0.010
+    (identical result with ONLY the freshly built kernel visible)
+
+==============================================================================
+1. THE FIXTURE -- where the seam sits at each rotation (no fillet performed)
+==============================================================================
+OCCT 7.8.1 -- fixture probe, NO fillet performed
+box 25 x 25.7184 x 10, pocket R 6.64766 depth 13, axis 45 deg about Y through (25, 12.7, 10)
+
+rotDeg   volume          faces  edges  seams  distCurve    distVertex   seam endpoint nearest the spine
+0.00     5849.473574     8      18     2      11.514078    11.514078    (25.0000, 12.7000, 0.5988)
+10.00    5849.473575     8      18     2      12.107392    12.107392    (25.0000, 11.5456, 0.7416)
+20.00    5849.473574     8      18     2      12.555208    12.555208    (25.0000, 10.4264, 1.1658)
+30.00    5849.473573     8      18     2      12.873130    12.873130    (25.0000, 9.3762, 1.8583)
+40.00    5849.473573     8      18     2      13.081532    13.081532    (25.0000, 8.4270, 2.7983)
+50.00    5849.473572     8      18     2      13.204033    13.204033    (25.0000, 7.6076, 3.9570)
+60.00    5849.473573     8      18     2      13.265448    13.265448    (25.0000, 6.9430, 5.2994)
+70.00    5849.473573     8      18     2      13.289266    13.289266    (25.0000, 6.4532, 6.7846)
+80.00    5849.473574     8      18     2      13.294928    13.294928    (25.0000, 6.1533, 8.3675)
+90.00    5849.473573     8      17     2      13.295312    13.295312    (25.0000, 6.0523, 10.0000)
+100.00   5849.473572     8      18     2      13.294928    13.294928    (23.3675, 6.1533, 10.0000)
+110.00   5849.473570     8      18     2      13.289266    13.289266    (21.7846, 6.4532, 10.0000)
+120.00   5849.473572     8      18     2      13.265448    13.265448    (20.2994, 6.9430, 10.0000)
+130.00   5849.473571     8      18     2      13.204033    13.204033    (18.9570, 7.6076, 10.0000)
+140.00   5849.473572     8      18     2      13.081532    13.081532    (17.7983, 8.4270, 10.0000)
+150.00   5849.473573     8      18     2      12.873130    12.873130    (16.8583, 9.3762, 10.0000)
+160.00   5849.473570     8      18     2      12.555208    12.555208    (16.1658, 10.4264, 10.0000)
+170.00   5849.473570     8      18     2      12.107392    12.107392    (15.7416, 11.5456, 10.0000)
+180.00   5849.473569     8      18     2      11.514078    11.514078    (15.5988, 12.7000, 10.0000)
+190.00   5849.473572     8      18     2      10.765406    10.765406    (15.7416, 13.8544, 10.0000)
+200.00   5849.473572     8      18     2      9.857786     9.857786     (16.1658, 14.9736, 10.0000)
+210.00   5849.473572     8      18     2      8.794022     8.794022     (16.8583, 16.0238, 10.0000)
+220.00   5849.473573     8      18     2      7.583134     7.583134     (17.7983, 16.9730, 10.0000)
+230.00   5849.473573     8      18     2      6.239904     6.239904     (18.9570, 17.7924, 10.0000)
+240.00   5849.473571     8      18     2      4.784231     4.784231     (20.2994, 18.4570, 10.0000)
+250.00   5849.473571     8      18     2      3.240298     3.240298     (21.7846, 18.9468, 10.0000)
+260.00   5849.473570     8      18     2      1.635623     1.635623     (23.3675, 19.2467, 10.0000)
+270.00   5849.473570     8      17     2      0.000000     0.000000     (25.0000, 19.3477, 10.0000)
+280.00   5849.473569     8      18     2      1.635623     1.635623     (25.0000, 19.2467, 8.3675)
+290.00   5849.473574     8      18     2      3.240298     3.240298     (25.0000, 18.9468, 6.7846)
+300.00   5849.473572     8      18     2      4.784231     4.784231     (25.0000, 18.4570, 5.2994)
+310.00   5849.473575     8      18     2      6.239904     6.239904     (25.0000, 17.7924, 3.9570)
+320.00   5849.473574     8      18     2      7.583134     7.583134     (25.0000, 16.9730, 2.7983)
+330.00   5849.473573     8      18     2      8.794022     8.794022     (25.0000, 16.0238, 1.8583)
+340.00   5849.473570     8      18     2      9.857786     9.857786     (25.0000, 14.9736, 1.1658)
+350.00   5849.473573     8      18     2      10.765406    10.765406    (25.0000, 13.8544, 0.7416)
+
+==============================================================================
+2. THE PAIR IS THE SAME SOLID -- only the seam moved
+==============================================================================
+OCCT 7.8.1 -- are fixture(0.000) and fixture(270.000) the same solid?
+
+  volume(A) = 5849.473573855
+  volume(B) = 5849.473570206
+  difference = 3.649e-06 mm3
+
+  volume(A - B) = 0.000000000000 mm3
+  volume(B - A) = 0.000000000000 mm3
+  -> identical region of space: YES
+
+  spine A: length 6.370744000  (25.0000, 19.3477, 10.0000) -> (25.0000, 25.7184, 10.0000)
+  spine B: length 6.370744000  (25.0000, 19.3477, 10.0000) -> (25.0000, 25.7184, 10.0000)
+
+  seam endpoint -> spine endpoint: A = 11.514077943 mm, B = 0.000000000 mm
+  -> the ONLY difference is the seam: YES
+
+==============================================================================
+3. THE MINIMAL PAIR x 4 RADII -- one process per case, 600 s deadline each
+==============================================================================
+rotDeg   radius   distVtx      status                 valid   volume         removed        analytic     secs     bop
+0        0.25     11.514078    OK                     true    5849.388121    +0.085453      0.085448     0.003    clean
+0        0.5      11.514078    OK                     true    5849.131723    +0.341850      0.341793     0.003    clean
+0        1.0      11.514078    OK                     true    5848.105498    +1.368076      1.367173     0.004    clean
+0        2.0      11.514078    OK                     true    5843.990406    +5.483168      5.468693     0.004    clean
+270      0.25     0.000000     BROKEN_WRONG_VOLUME    true    5849.420416    +0.053154      0.085448     0.012    DIRTY
+270      0.5      0.000000     BROKEN_WRONG_VOLUME    false   4953.892213    +895.581358    0.341793     0.013    DIRTY
+270      1.0      0.000000     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.010    DIRTY
+270      2.0      0.000000     BROKEN_VOLUME_GREW     false   6193.313396    -343.839826    5.468693     0.011    DIRTY
+
+per-case logs: C:/dev/freecad-kernel-fixes/build/seam-fillet/logs
+deadline was 600 s per case; 'removed' is volume(base) - volume(filleted),
+so a NEGATIVE value means the fillet ADDED material, which no fillet can do.
+
+==============================================================================
+4. THE DANGER BAND -- rotations 258..282, 300 s deadline each
+==============================================================================
+rotDeg   radius   distVtx      status                 valid   volume         removed        analytic     secs     bop
+258      0.25     1.960011     OK                     true    5849.388119    +0.085452      0.085448     0.003    clean
+258      0.5      1.960011     OK                     true    5849.131721    +0.341850      0.341793     0.004    clean
+258      1.0      1.960011     OK                     true    5848.105495    +1.368075      1.367173     0.004    clean
+258      2.0      1.960011     BROKEN_VOLUME_GREW     false   6193.313398    -343.839828    5.468693     0.009    DIRTY
+260      0.25     1.635623     OK                     true    5849.388118    +0.085452      0.085448     0.003    clean
+260      0.5      1.635623     OK                     true    5849.131721    +0.341850      0.341793     0.004    clean
+260      1.0      1.635623     OK                     true    5848.105495    +1.368075      1.367173     0.004    clean
+260      2.0      1.635623     BROKEN_VOLUME_GREW     false   6193.313398    -343.839828    5.468693     0.009    DIRTY
+262      0.25     1.309993     OK                     true    5849.388118    +0.085452      0.085448     0.004    clean
+262      0.5      1.309993     OK                     true    5849.131721    +0.341850      0.341793     0.004    clean
+262      1.0      1.309993     OK                     true    5848.105495    +1.368075      1.367173     0.004    clean
+262      2.0      1.309993     BROKEN_VOLUME_GREW     false   6193.313398    -343.839828    5.468693     0.010    DIRTY
+264      0.25     0.983368     OK                     true    5849.388118    +0.085452      0.085448     0.003    clean
+264      0.5      0.983368     OK                     true    5849.131721    +0.341850      0.341793     0.004    clean
+264      1.0      0.983368     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.009    DIRTY
+264      2.0      0.983368     BROKEN_VOLUME_GREW     false   6193.313397    -343.839827    5.468693     0.010    DIRTY
+266      0.25     0.655995     OK                     true    5849.388118    +0.085452      0.085448     0.003    clean
+266      0.5      0.655995     OK                     true    5849.131721    +0.341850      0.341793     0.004    clean
+266      1.0      0.655995     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.009    DIRTY
+266      2.0      0.655995     BROKEN_VOLUME_GREW     false   6193.313397    -343.839826    5.468693     0.010    DIRTY
+268      0.25     0.328122     OK                     true    5849.388118    +0.085452      0.085448     0.003    clean
+268      0.5      0.328122     BROKEN_WRONG_VOLUME    true    5521.732538    +327.741033    0.341793     0.011    DIRTY
+268      1.0      0.328122     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.009    DIRTY
+268      2.0      0.328122     BROKEN_VOLUME_GREW     false   6193.483122    -344.009552    5.468693     0.009    DIRTY
+269      0.25     0.164077     BROKEN_VOLUME_GREW     false   6316.072803    -466.599233    0.085448     0.005    DIRTY
+269      0.5      0.164077     BROKEN_WRONG_VOLUME    true    5521.732667    +327.740903    0.341793     0.011    DIRTY
+269      1.0      0.164077     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.009    DIRTY
+269      2.0      0.164077     BROKEN_VOLUME_GREW     false   6193.313396    -343.839826    5.468693     0.009    DIRTY
+270      0.25     0.000000     BROKEN_WRONG_VOLUME    true    5849.420416    +0.053154      0.085448     0.012    DIRTY
+270      0.5      0.000000     BROKEN_WRONG_VOLUME    false   4953.892213    +895.581358    0.341793     0.012    DIRTY
+270      1.0      0.000000     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.010    DIRTY
+270      2.0      0.000000     BROKEN_VOLUME_GREW     false   6193.313396    -343.839826    5.468693     0.010    DIRTY
+271      0.25     0.164077     BROKEN_WRONG_VOLUME    true    5849.429244    +0.044326      0.085448     0.012    DIRTY
+271      0.5      0.164077     BROKEN_WRONG_VOLUME    true    5521.732487    +327.741083    0.341793     0.010    DIRTY
+271      1.0      0.164077     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.009    DIRTY
+271      2.0      0.164077     BROKEN_VOLUME_GREW     false   6193.313396    -343.839825    5.468693     0.010    DIRTY
+272      0.25     0.328122     OK                     true    5849.388118    +0.085452      0.085448     0.003    clean
+272      0.5      0.328122     BROKEN_WRONG_VOLUME    false   4961.917040    +887.556529    0.341793     0.014    DIRTY
+272      1.0      0.328122     BROKEN_VOLUME_GREW     false   6224.444835    -374.971265    1.367173     0.009    DIRTY
+272      2.0      0.328122     BROKEN_VOLUME_GREW     false   6193.313395    -343.839826    5.468693     0.010    DIRTY
+274      0.25     0.655995     OK                     true    5849.388118    +0.085451      0.085448     0.003    clean
+274      0.5      0.655995     OK                     true    5849.131720    +0.341849      0.341793     0.004    clean
+274      1.0      0.655995     BROKEN_WRONG_VOLUME    true    5847.225377    +2.248192      1.367173     0.022    DIRTY
+274      2.0      0.655995     BROKEN_VOLUME_GREW     false   6193.313395    -343.839827    5.468693     0.010    DIRTY
+276      0.25     0.983368     OK                     true    5849.388117    +0.085451      0.085448     0.003    clean
+276      0.5      0.983368     OK                     true    5849.131720    +0.341848      0.341793     0.004    clean
+276      1.0      0.983368     BROKEN_WRONG_VOLUME    true    5847.221966    +2.251602      1.367173     0.018    DIRTY
+276      2.0      0.983368     BROKEN_VOLUME_GREW     false   6193.313396    -343.839827    5.468693     0.009    DIRTY
+278      0.25     1.309993     OK                     true    5849.388118    +0.085450      0.085448     0.003    clean
+278      0.5      1.309993     OK                     true    5849.131720    +0.341848      0.341793     0.004    clean
+278      1.0      1.309993     OK                     true    5848.105495    +1.368073      1.367173     0.003    clean
+278      2.0      1.309993     BROKEN_WRONG_VOLUME    true    5843.206519    +6.267050      5.468693     0.020    DIRTY
+280      0.25     1.635623     OK                     true    5849.388118    +0.085450      0.085448     0.003    clean
+280      0.5      1.635623     OK                     true    5849.131721    +0.341848      0.341793     0.003    clean
+280      1.0      1.635623     OK                     true    5848.105496    +1.368072      1.367173     0.004    clean
+280      2.0      1.635623     BROKEN_WRONG_VOLUME    true    5843.202590    +6.270979      5.468693     0.020    DIRTY
+282      0.25     1.960011     OK                     true    5849.388119    +0.085451      0.085448     0.003    clean
+282      0.5      1.960011     OK                     true    5849.131722    +0.341848      0.341793     0.004    clean
+282      1.0      1.960011     OK                     true    5848.105497    +1.368073      1.367173     0.003    clean
+282      2.0      1.960011     BROKEN_WRONG_VOLUME    true    5843.198410    +6.275160      5.468693     0.020    DIRTY
+
+per-case logs: /c/dev/freecad-kernel-fixes/build/seam-fillet/logs-band
+deadline was 300 s per case; 'removed' is volume(base) - volume(filleted),
+so a NEGATIVE value means the fillet ADDED material, which no fillet can do.
+
+==============================================================================
+4b. CLOSING THE r = 2.0 BAND -- rotations 248..292
+==============================================================================
+rotDeg   radius   distVtx      status                 valid   volume         removed        analytic     secs     bop
+248      2.0      3.554864     OK                     true    5843.990405    +5.483165      5.468693     0.004    clean
+250      2.0      3.240298     OK                     true    5843.990405    +5.483165      5.468693     0.004    clean
+252      2.0      2.923295     OK                     true    5843.990405    +5.483165      5.468693     0.004    clean
+254      2.0      2.604088     OK                     true    5843.990405    +5.483165      5.468693     0.004    clean
+256      2.0      2.282913     OK                     true    5843.990405    +5.483165      5.468693     0.004    clean
+284      2.0      2.282913     OK                     true    5843.990407    +5.483164      5.468693     0.004    clean
+286      2.0      2.604088     OK                     true    5843.990407    +5.483166      5.468693     0.004    clean
+288      2.0      2.923295     OK                     true    5843.990407    +5.483166      5.468693     0.004    clean
+290      2.0      3.240298     OK                     true    5843.990407    +5.483167      5.468693     0.004    clean
+292      2.0      3.554864     OK                     true    5843.990406    +5.483169      5.468693     0.004    clean
+
+per-case logs: /c/dev/freecad-kernel-fixes/build/seam-fillet/logs-band2
+deadline was 300 s per case; 'removed' is volume(base) - volume(filleted),
+so a NEGATIVE value means the fillet ADDED material, which no fillet can do.
+
+==============================================================================
+5. ELEVEN MORE RADII WITH THE SEAM EXACTLY ON THE SPINE VERTEX (rot 270)
+   includes r = 0.55, a radius that did not finish in 9.2 min in FreeCAD
+==============================================================================
+rotDeg   radius   distVtx      status                 valid   volume         removed        analytic     secs     bop
+270      0.1      0.000000     BROKEN_WRONG_VOLUME    false   167.897096     +5681.576475   0.013672     0.014    DIRTY
+270      0.3      0.000000     BROKEN_WRONG_VOLUME    true    5849.173867    +0.299703      0.123046     0.015    DIRTY
+270      0.4      0.000000     BROKEN_WRONG_VOLUME    true    5848.965688    +0.507883      0.218748     0.016    DIRTY
+270      0.55     0.000000     BROKEN_WRONG_VOLUME    false   -506443847.322587 +506449696.796158 0.413570     0.012    DIRTY
+270      0.6      0.000000     BROKEN_VOLUME_GREW     false   6273.854695    -424.381125    0.492182     0.006    DIRTY
+270      0.75     0.000000     BROKEN_VOLUME_GREW     false   6248.684577    -399.211007    0.769035     0.006    DIRTY
+270      0.9      0.000000     BROKEN_VOLUME_GREW     false   6232.741677    -383.268107    1.107410     0.006    DIRTY
+270      1.5      0.000000     BROKEN_VOLUME_GREW     false   6138.263485    -288.789915    3.076140     0.012    DIRTY
+270      2.5      0.000000     BROKEN_VOLUME_GREW     false   6205.196116    -355.722545    8.544834     0.010    DIRTY
+270      3.0      0.000000     BROKEN_VOLUME_GREW     false   6216.921188    -367.447617    12.304560    0.008    DIRTY
+270      4.0      0.000000     BROKEN_VOLUME_GREW     false   6182.108010    -332.634440    21.874774    0.008    DIRTY
+
+per-case logs: /c/dev/freecad-kernel-fixes/build/seam-fillet/logs-hang
+deadline was 600 s per case; 'removed' is volume(base) - volume(filleted),
+so a NEGATIVE value means the fillet ADDED material, which no fillet can do.
+
+==============================================================================
+6. THE BAND, REDUCED
+==============================================================================
+max_broken = largest seam->spine vertex distance still giving a wrong result
+min_intact = smallest distance giving a correct result
+
+radius   max_broken     min_intact     max_broken/r
+0.25     0.164077       0.328122       0.656
+0.5      0.328122       0.655995       0.656
+1.0      0.983368       1.309993       0.983
+2.0      1.960011       2.282913       0.980
+
+89 cases run in total, each in its own process under its own deadline.
+HANG count: 0.  Slowest single case: 0.022 s.
