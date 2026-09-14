@@ -1,0 +1,5 @@
+FreeCAD 1.1.1, OCCT 7.8.1, C:\dev\fc-gap2\bo\bin\FreeCADCmd.exe
+tool valid True volume 7068.583471; side face u in [-3.141612654, 3.141612654], wider than 2pi by 4e-05
+cut 39784.915488 (1 solids)  common 5815.084504 (1 solids)  fuse 46853.499096  exact common 5815.084489
+|cut+common-box| 0.000009  |box+tool-common-fuse| 0.000129  |common-exact| 0.000015
+PERIODIC-PCURVE: FIXED

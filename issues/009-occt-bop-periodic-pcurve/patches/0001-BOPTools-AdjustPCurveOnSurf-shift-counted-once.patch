@@ -1,0 +1,16 @@
+diff --git a/src/BOPTools/BOPTools_AlgoTools2D.cxx b/src/BOPTools/BOPTools_AlgoTools2D.cxx
+index 9bcafe1c..b9437e4c 100644
+--- a/src/BOPTools/BOPTools_AlgoTools2D.cxx
++++ b/src/BOPTools/BOPTools_AlgoTools2D.cxx
+@@ -308,7 +308,10 @@ void BOPTools_AlgoTools2D::AdjustPCurveOnSurf
+       u2=UMin+aUPeriod;
+     }
+     // b. compute du again using clarified value of u2
+-    GeomInt::AdjustPeriodic(u2, UMin, UMax, aUPeriod, u2, du, 0.);
++    // The shifted parameter must not overwrite u2: the classification below
++    // tests u2 + du, which would count the shift twice.
++    Standard_Real aU2Shifted;
++    GeomInt::AdjustPeriodic(u2, UMin, UMax, aUPeriod, aU2Shifted, du, 0.);
+     //
+     if (du==0.) {
+       if (aBAS.GetType()==GeomAbs_Cylinder) {
