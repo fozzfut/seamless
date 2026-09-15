@@ -50,7 +50,12 @@ function Verdict {
     $p = Start-Process -FilePath $cmd -ArgumentList $argList -PassThru -WindowStyle Hidden
     $done = $p.WaitForExit(120000)
     if (-not $done) { $p.Kill() }
-    Remove-Item -Recurse -Force $work -ErrorAction SilentlyContinue
+    # $env:TEMP is an 8.3 path on the owner's machine (C:\Users\B72A~1\...: his user name is Cyrillic, and FreeCAD
+    # cannot open a Cyrillic path, so the copies stay under the short form). Remove-Item rejects that form with a
+    # TERMINATING error that -ErrorAction SilentlyContinue does not catch: "An object at the specified path
+    # C:\Users\B72A~1 does not exist". Under $ErrorActionPreference = "Stop" it ended the script before the verdict was
+    # printed. .NET deletes the directory by the same path; a failure only leaves the copies behind.
+    try { [IO.Directory]::Delete($work, $true) } catch { Write-Host ("  (work directory not removed: " + $_.Exception.Message + ")") }
     if (-not $done) { return "PERIODIC-PCURVE: TIMEOUT after 120 s" }
     if (-not (Test-Path $report)) { return "PERIODIC-PCURVE: NO REPORT (FreeCADCmd exit " + $p.ExitCode + ")" }
     $text = Get-Content $report -Encoding UTF8
