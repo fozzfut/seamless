@@ -1,0 +1,348 @@
+{
+ "file": "C:/dev/hybriddesign-perf/files/VR6-350-new.FCStd",
+ "tag": "fcperf_vr6_stored_csd0",
+ "startup_wall_s": 8.3502964,
+ "startup_cpu_s": 7.25,
+ "active_workbench": "HybridDesignWorkbench",
+ "workbenches": [
+  "AssemblyWorkbench",
+  "BIMWorkbench",
+  "CAMWorkbench",
+  "DraftWorkbench",
+  "FastenersWorkbench",
+  "FemWorkbench",
+  "HybridDesignWorkbench",
+  "InspectionWorkbench",
+  "MaterialWorkbench",
+  "MeshWorkbench",
+  "NoneWorkbench",
+  "OpenSCADWorkbench",
+  "PartDesignWorkbench",
+  "PartWorkbench",
+  "PointsWorkbench",
+  "ReverseEngineeringWorkbench",
+  "RobotWorkbench",
+  "SketcherWorkbench",
+  "SpreadsheetWorkbench",
+  "SurfaceWorkbench",
+  "TechDrawWorkbench",
+  "TestWorkbench",
+  "ThreadProfileWorkbench"
+ ],
+ "mod_dirs": [
+  "C:\\dev\\fc-perf\\Mod\\AddonManager",
+  "C:\\dev\\fc-perf\\Mod\\Assembly",
+  "C:\\dev\\fc-perf\\Mod\\BIM",
+  "C:\\dev\\fc-perf\\Mod\\CAM",
+  "C:\\dev\\fc-perf\\Mod\\Draft",
+  "C:\\dev\\fc-perf\\Mod\\Fem",
+  "C:\\dev\\fc-perf\\Mod\\Help",
+  "C:\\dev\\fc-perf\\Mod\\Idf",
+  "C:\\dev\\fc-perf\\Mod\\Import",
+  "C:\\dev\\fc-perf\\Mod\\Inspection",
+  "C:\\dev\\fc-perf\\Mod\\Material",
+  "C:\\dev\\fc-perf\\Mod\\Measure",
+  "C:\\dev\\fc-perf\\Mod\\Mesh",
+  "C:\\dev\\fc-perf\\Mod\\MeshPart",
+  "C:\\dev\\fc-perf\\Mod\\OpenSCAD",
+  "C:\\dev\\fc-perf\\Mod\\Part",
+  "C:\\dev\\fc-perf\\Mod\\PartDesign",
+  "C:\\dev\\fc-perf\\Mod\\Plot",
+  "C:\\dev\\fc-perf\\Mod\\Points",
+  "C:\\dev\\fc-perf\\Mod\\ReverseEngineering",
+  "C:\\dev\\fc-perf\\Mod\\Robot",
+  "C:\\dev\\fc-perf\\Mod\\Show",
+  "C:\\dev\\fc-perf\\Mod\\Sketcher",
+  "C:\\dev\\fc-perf\\Mod\\Spreadsheet",
+  "C:\\dev\\fc-perf\\Mod\\Start",
+  "C:\\dev\\fc-perf\\Mod\\Surface",
+  "C:\\dev\\fc-perf\\Mod\\TechDraw",
+  "C:\\dev\\fc-perf\\Mod\\Test",
+  "C:\\dev\\fc-perf\\Mod\\Tux",
+  "C:\\dev\\fc-perf\\Mod\\Web",
+  "C:\\Users\\\u0438\u043b\u044c\u044f\\AppData\\Roaming\\FreeCAD\\v1-1\\Mod\\fasteners",
+  "C:\\Users\\\u0438\u043b\u044c\u044f\\AppData\\Roaming\\FreeCAD\\v1-1\\Mod\\HybridDesign",
+  "C:\\Users\\\u0438\u043b\u044c\u044f\\AppData\\Roaming\\FreeCAD\\v1-1\\Mod\\manifest.json",
+  "C:\\Users\\\u0438\u043b\u044c\u044f\\AppData\\Roaming\\FreeCAD\\v1-1\\Mod\\OpenTheme",
+  "C:\\Users\\\u0438\u043b\u044c\u044f\\AppData\\Roaming\\FreeCAD\\v1-1\\Mod\\ThreadProfile"
+ ],
+ "user_app_data": "C:\\Users\\\u0438\u043b\u044c\u044f\\AppData\\Roaming\\FreeCAD\\v1-1\\",
+ "hd_loaded": true,
+ "hd_modules_at_start": [
+  "hybriddesign",
+  "hybriddesign.first_run",
+  "hybriddesign.gui",
+  "hybriddesign.gui.commands",
+  "hybriddesign.gui.context_gui",
+  "hybriddesign.gui.fillet_view",
+  "hybriddesign.gui.grid",
+  "hybriddesign.gui.keymap",
+  "hybriddesign.gui.reparent",
+  "hybriddesign.gui.ribbon",
+  "hybriddesign.gui.selection",
+  "hybriddesign.gui.sketch_tools",
+  "hybriddesign.gui.sketchmode",
+  "hybriddesign.gui.stock_icons",
+  "hybriddesign.gui.theme",
+  "hybriddesign.gui.tree_follow",
+  "hybriddesign.gui.workbench",
+  "hybriddesign.import_hook",
+  "hybriddesign.ops",
+  "hybriddesign.ops.component",
+  "hybriddesign.ops.context",
+  "hybriddesign.ops.geometry",
+  "hybriddesign.ops.joints",
+  "hybriddesign.ops.move",
+  "hybriddesign.ops.refs",
+  "hybriddesign.ops.retry",
+  "hybriddesign.ops.solids",
+  "hybriddesign.ribbon_plan"
+ ],
+ "startup_settle_s": 1.0187771999917459,
+ "startup_wall_before_open_s": 9.3701278,
+ "script_to_open_s": 1.0193296000070404,
+ "gui_open_call_s": 8.292550600017421,
+ "open_to_idle_s": 8.292550600017421,
+ "after_open_busy_s": 0.0,
+ "event_gaps_over_100ms": [],
+ "max_event_gap_s": 0.03459249998559244,
+ "n_objects": 132,
+ "touched_after_open": [
+  "VR6_350_new_v59"
+ ],
+ "view_providers": 132,
+ "visible_vps": 121,
+ "hd_modules_after": 29,
+ "tessellation_replay": {
+  "stored": {
+   "total_s": 7.18505629998981,
+   "n": 56,
+   "top": [
+    [
+     4.0827,
+     "Part__Feature014",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ],
+    [
+     0.7319,
+     "Part__Feature019",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ],
+    [
+     0.43,
+     "Part__Feature013",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ],
+    [
+     0.1109,
+     "Part__Feature021",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ],
+    [
+     0.1093,
+     "Part__Feature016",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ],
+    [
+     0.1024,
+     "Part__Feature028",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ],
+    [
+     0.0781,
+     "Part__Feature018",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ],
+    [
+     0.0756,
+     "Part__Feature017",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ],
+    [
+     0.0552,
+     "Part__Feature015",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ],
+    [
+     0.0495,
+     "Part__Feature005",
+     "Part::Feature",
+     6.400100095367431,
+     0.5
+    ]
+   ]
+  },
+  "ang28_5": {
+   "total_s": 0.875452900014352,
+   "n": 56,
+   "top": [
+    [
+     0.2856,
+     "Part__Feature014",
+     "Part::Feature",
+     28.5,
+     0.5
+    ],
+    [
+     0.1095,
+     "Part__Feature019",
+     "Part::Feature",
+     28.5,
+     0.5
+    ],
+    [
+     0.0737,
+     "Part__Feature013",
+     "Part::Feature",
+     28.5,
+     0.5
+    ],
+    [
+     0.0317,
+     "Part__Feature017",
+     "Part::Feature",
+     28.5,
+     0.5
+    ],
+    [
+     0.0306,
+     "Part__Feature018",
+     "Part::Feature",
+     28.5,
+     0.5
+    ],
+    [
+     0.0293,
+     "Part__Feature021",
+     "Part::Feature",
+     28.5,
+     0.5
+    ],
+    [
+     0.0256,
+     "Part__Feature028",
+     "Part::Feature",
+     28.5,
+     0.5
+    ],
+    [
+     0.0231,
+     "Part__Feature015",
+     "Part::Feature",
+     28.5,
+     0.5
+    ],
+    [
+     0.0187,
+     "Part__Feature",
+     "Part::Feature",
+     28.5,
+     0.5
+    ],
+    [
+     0.0181,
+     "Part__Feature005",
+     "Part::Feature",
+     28.5,
+     0.5
+    ]
+   ]
+  },
+  "stored_again": {
+   "total_s": 7.2590710002114065,
+   "n": 56,
+   "top": [
+    [
+     4.0603,
+     "Part__Feature014",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ],
+    [
+     0.7257,
+     "Part__Feature019",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ],
+    [
+     0.4835,
+     "Part__Feature013",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ],
+    [
+     0.1098,
+     "Part__Feature021",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ],
+    [
+     0.1087,
+     "Part__Feature016",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ],
+    [
+     0.1076,
+     "Part__Feature028",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ],
+    [
+     0.0826,
+     "Part__Feature018",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ],
+    [
+     0.0754,
+     "Part__Feature017",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ],
+    [
+     0.066,
+     "Part__Feature005",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ],
+    [
+     0.0646,
+     "Part__Feature",
+     "Part::Feature",
+     6.400000095367432,
+     0.5
+    ]
+   ]
+  }
+ },
+ "process_wall_at_end_s": 33.6186461,
+ "process_cpu_at_end_s": 115.875
+}

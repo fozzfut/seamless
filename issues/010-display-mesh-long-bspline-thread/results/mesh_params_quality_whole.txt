@@ -1,0 +1,9 @@
+OCCT 7.8.1, deflection 0.634945, target whole shape
+freecad_6.4_stored         run0     45.851 s  triangles   1008762  nodes    585113  unmeshed_faces 0  status 0  chord_max 0.1254  chord_mean 0.00285  (samples 144211, deflection 0.6349)
+freecad_28.5_default       run0      0.632 s  triangles     75510  nodes     56418  unmeshed_faces 0  status 0  chord_max 0.4930  chord_mean 0.04044  (samples 10812, deflection 0.6349)
+freecad_15                 run0      5.622 s  triangles    272186  nodes    172222  unmeshed_faces 0  status 0  chord_max 0.3477  chord_mean 0.00868  (samples 38967, deflection 0.6349)
+freecad_10                 run0     13.034 s  triangles    514490  nodes    314973  unmeshed_faces 0  status 0  chord_max 0.1188  chord_mean 0.00435  (samples 73565, deflection 0.6349)
+15_csd_off                 run0      0.746 s  triangles     96144  nodes     84201  unmeshed_faces 0  status 0  chord_max 0.4890  chord_mean 0.02519  (samples 13818, deflection 0.6349)
+28.5_csd_off               run0      0.287 s  triangles     50054  nodes     43690  unmeshed_faces 0  status 0  chord_max 0.4191  chord_mean 0.05820  (samples 7176, deflection 0.6349)
+6.4_csd_off                run0      4.008 s  triangles    210486  nodes    185975  unmeshed_faces 0  status 0  chord_max 0.3804  chord_mean 0.01561  (samples 30171, deflection 0.6349)
+6.4_interior_28.5          run0     14.346 s  triangles    488260  nodes    324862  unmeshed_faces 0  status 0  chord_max 0.3602  chord_mean 0.00589  (samples 69853, deflection 0.6349)

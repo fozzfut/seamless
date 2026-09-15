@@ -1,0 +1,27 @@
+﻿diff --git a/src/BRepMesh/BRepMesh_IncrementalMesh.cxx b/src/BRepMesh/BRepMesh_IncrementalMesh.cxx
+index cbd18c4a..1e2a94ed 100644
+--- a/src/BRepMesh/BRepMesh_IncrementalMesh.cxx
++++ b/src/BRepMesh/BRepMesh_IncrementalMesh.cxx
+@@ -101,6 +101,22 @@ void BRepMesh_IncrementalMesh::Perform(const Handle(IMeshTools_Context)& theCont
+ {
+   initParameters();
+ 
++  // freecad-kernel-fixes issue 010, EXPERIMENT ONLY: environment overrides so one TKMesh.dll can try
++  // display-mesh parameters inside an unmodified FreeCAD. OCCT_MESH_CSD=0|1 sets ControlSurfaceDeflection;
++  // OCCT_MESH_MIN_ANGLE_INTERIOR_DEG raises AngleInterior to at least that many degrees.
++  if (const char* aCsd = std::getenv ("OCCT_MESH_CSD"))
++  {
++    myParameters.ControlSurfaceDeflection = (aCsd[0] == '1');
++  }
++  if (const char* aMinAng = std::getenv ("OCCT_MESH_MIN_ANGLE_INTERIOR_DEG"))
++  {
++    const Standard_Real aMin = std::atof (aMinAng) * M_PI / 180.0;
++    if (myParameters.AngleInterior < aMin)
++    {
++      myParameters.AngleInterior = aMin;
++    }
++  }
++
+   theContext->SetShape(Shape());
+   theContext->ChangeParameters()            = myParameters;
+   theContext->ChangeParameters().CleanModel = Standard_False;

@@ -1,0 +1,6 @@
+OCCT 7.8.1, deflection 0.634945, target whole shape
+freecad_6.4_stored         run0    101.054 s  triangles   1008762  nodes    585113  unmeshed_faces 0  status 0
+freecad_28.5_default       run0      1.293 s  triangles     75510  nodes     56418  unmeshed_faces 0  status 0
+6.4_csd_off                run0      7.397 s  triangles    210486  nodes    185975  unmeshed_faces 0  status 0
+6.4_interior_28.5          run0     26.693 s  triangles    488260  nodes    324862  unmeshed_faces 0  status 0
+6.4_delabella              run0     86.187 s  triangles    960060  nodes    560762  unmeshed_faces 0  status 0
