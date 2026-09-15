@@ -188,8 +188,108 @@ powershell -ExecutionPolicy Bypass -File C:\dev\freecad-kernel-fixes\issues\009-
 - Грань на 5.27 периода после Refine (раздел 6) — не исправлена, причина не найдена.
 - Тесты OCCT (DRAW) не прогонялись; отчёт в OCCT не написан.
 - Разница 0.57 мм³ с Fusion на патченом ядре не объяснена.
+- Фазз (раздел 11.3) нашёл то, что патч не лечит: конус в домене [−π, π] под произвольно повёрнутым ящиком режется
+  неверно на обоих ядрах уже ровно на периоде (0.08–0.12 %), а при расширении на патченом ядре — до 2.5 %; и две
+  случайные пары, одинаково неверные на обоих ядрах. Не исследовано.
 
-## 11. Как повторить
+## 11. Регрессионное тестирование (Regression testing), 15 сентября 2026
+
+Две установки FreeCAD 1.1.1, которые различаются ТОЛЬКО TKBO.dll (сравнены все 660 файлов `bin`): **патч** —
+`C:\Program Files\FreeCAD 1.1`, установка владельца (TKBO `6e31e0e1…`); **сток** — `C:\dev\fc-gap2\patched` (TKBO
+`5983229e…`). TKFillet в обеих один и тот же, `4e89e519…` дефекта 001. Каждый FreeCADCmd — с копиями user.cfg и
+system.cfg (`-u`, `-s`), своим TEMP и дедлайном. Скрипты — `tests/`; геометрия генерируется в них самих, данных
+владельца нет. Выходные файлы — `C:\dev\freecad-kernel-fixes\build\regression-009` (в репозиторий не входят).
+
+```
+powershell -ExecutionPolicy Bypass -File tests\run_regression.ps1 -FreeCADDir "C:\Program Files\FreeCAD 1.1" -Out <выход>\patched\<шаг> -Steps suites -Suites TestPartApp
+powershell -ExecutionPolicy Bypass -File tests\run_regression.ps1 -FreeCADDir C:\dev\fc-gap2\patched -Out <выход>\stock\<шаг> -Steps suites -Suites TestPartApp
+  (так же -Suites TestPartDesignApp, TestSketcherApp, TestOpenSCADApp, TestArch, TestDraft, TestTechDrawApp, TestCAMApp;
+   -Steps fuzz; -Steps python,cpp)
+"C:\Program Files\FreeCAD 1.1\bin\python.exe" tests\compare_suites.py <выход>\stock <выход>\patched
+"C:\Program Files\FreeCAD 1.1\bin\python.exe" tests\compare_fuzz.py <выход>\stock\fuzz\fuzz.jsonl <выход>\patched\fuzz\fuzz.jsonl
+```
+
+### 11.1 Наборы тестов FreeCAD (`FreeCADCmd -t <набор>`)
+
+| набор | сток | патч |
+|---|---|---|
+| TestPartApp | Ran 131, OK | Ran 131, OK |
+| TestPartDesignApp | Ran 168, OK | Ran 168, OK |
+| TestSketcherApp | Ran 32, OK (skipped=1) | Ran 32, OK (skipped=1) |
+| TestOpenSCADApp | Ran 26, FAILED (errors=20) | Ran 26, FAILED (errors=20), те же 20 |
+| TestArch (BIM) | Ran 88, OK | Ran 88, OK |
+| TestDraft | Ran 69, OK | Ran 69, OK |
+| TestTechDrawApp | Ran 7, OK | Ran 7, OK |
+| TestCAMApp | Ran 731, FAILED (failures=1, skipped=6) | Ran 731, FAILED (failures=1, skipped=6), тот же тест |
+
+`compare_suites.py` сравнивает строку «Ran N», итоговую строку и имена упавших тестов из заголовков `FAIL:`/`ERROR:`:
+**SUITES-VERDICT: SAME (0 of 8 suite(s) differ)**. Все 20 ошибок TestOpenSCADApp — `OpenSCAD executable unavailable`
+(программы OpenSCAD на машине нет); падение TestCAMApp — `test_linuxcnc_serialize`, формат числа (`D6.000` вместо
+`D6.00`). Первый прогон TestCAMApp шёл при шести параллельных процессах: на стоке он встал на
+`TestToolBitShapeSvgIcon.test_to_bytes` и был убит через 520 с, на патче прошёл за 88 с с тем же падением; повтор на
+обоих ядрах одновременно — 731 тест за 123.0 и 123.2 с, результат в таблице. Наборы с булевыми операциями выбраны из
+`Test*App.py` и `Test*.py` в `Mod`; TestFemApp, TestMaterialsApp, TestSurfaceApp, TestAddonManagerApp не запускались.
+
+### 11.2 Воспроизведения дефекта
+
+| | сток | патч |
+|---|---|---|
+| C++ `build\periodic-pcurve\periodic_pcurve.exe`, первым в PATH — `bin` установки | cut 45600, common 0 (0 тел), \|common−exact\| 5815.084489 — **BROKEN** | cut 39784.91549, common 5815.084504, \|common−exact\| 1.48e-05 — **FIXED** |
+| Python `repro/python/verify_periodic_pcurve.py` (побайтная копия, md5 `0d6c434e…`) | cut 45600.000000, common 0.000000, \|box+tool−common−fuse\| 5815.084374 — **BROKEN** | cut 39784.915488, common 5815.084504, \|common−exact\| 0.000015 — **FIXED** |
+
+### 11.3 Фазз булевых операций (`tests/boolean_fuzz.py`, seed 9009)
+
+По 1752 записи на каждом ядре (93.4 с сток, 92.1 с патч):
+
+- 600 — 150 случайных пар примитивов (ящик, цилиндр, конус, сфера, тор; случайные размеры, положения и повороты)
+  × Cut, Common, Fuse, Section;
+- 1152 — инструмент с периодической гранью, расширенной в BREP-тексте: цилиндр и конус, повёрнутые на полпериода
+  (домен [−π, π], как у владельца), и B-сплайновый цилиндр (`toNurbs`), сдвинутый на период; ширина сверх периода
+  0, 1e-6, 4.75e-6, 1e-5, 4.27e-5, 6.14e-5, 1e-4, 1e-3 рад; против 12 оснований (ящик или цилиндр, половина
+  повёрнута только вокруг оси инструмента) × 4 операции. Эталон — та же операция с чистым примитивом в том же прогоне.
+
+Совпали 1521 запись, различаются **231, и во всех 231 сток неверен**. Ни одной записи, верной на стоке и неверной на
+патче: **FUZZ-VERDICT: PASS**. Различия только у повёрнутых на полпериода цилиндра (105) и конуса (126) и только в
+Cut, Common и Fuse; случайные пары, B-сплайн и все сечения на двух ядрах совпадают.
+
+| почему неверен сток | записей | патч верен | патч неверен |
+|---|---|---|---|
+| результат не проходит `isValid()` (объём часто совпадает с эталоном) | 126 | 120 | 6 |
+| не то число тел (0 или 2 вместо 1) | 49 | 43 | 6 |
+| Cut, Common и Fuse не сходятся (включение-исключение), сток дальше эталона на 10.3–181 % | 49 | 42 | 7 |
+| все три сходятся, но дальше эталона на 68.4 % | 7 | 7 | 0 |
+
+Там, где патч верен, он отличается от эталона не больше чем на 0.113 % (это изменение самого инструмента при
+расширении, разрешено судьёй). Там, где патч неверен (19 записей), — это один случай: конус и ящик, повёрнутый
+произвольно (основание 5). Сток отклоняется на 27.7–100 %, патч — на 0.08–2.5 %. Тот же конус с тем же ящиком
+ровно на периоде (расширение 0) оба ядра режут одинаково неверно: cut 7356.557392 при эталоне 7365.447533, common
+2050.759839 при 2049.129886, fuse 13494.006731 при 13506.818460; при 1e-6 патч даёт то же (cut 7356.556739), при
+1e-5…1e-4 — до 2.5 %. Это второй, не исследованный дефект; патч убирает грубую ошибку, но не его.
+
+Одинаково неверны на обоих ядрах 9 записей, к патчу не относятся: пара random-039 (Common пустой, Fuse 2965.096604
+без инструмента, |Vb+Vt−common−fuse| 1697.42), пара random-127 (Fuse расходится на 121.721 мм³) и три записи конуса
+ровно на периоде из абзаца выше. Итог по всем записям: сток — верно 1362, неверно 240 (validity 126, solids 49,
+consistency 55, deviation 10), не судится 150 (сечения случайных пар); патч — верно 1574, неверно 28 (consistency 18,
+deviation 10), не судится 150.
+
+Судья (`compare_fuzz.py`, правила в его docstring) считает запись неверной, если результат невалиден при валидном
+эталоне, если не совпало число тел, если Cut, Common и Fuse пары расходятся больше чем на 1e-3 от V(base) + V(tool),
+или если результат дальше эталона больше чем на 1e-4 плюс 10 объёмов полосы, которую добавляет расширение; для
+B-сплайна оба порога 1e-2. Пороги взяты из этого же прогона: случайные пары сходятся с медианой 5.2e-8, 98 % ниже
+8.6e-5 (выше только random-039 и random-127: 0.36 и 0.038); B-сплайн на обоих ядрах расходится до 0.0074 (ровно на
+периоде 0.0046) — OCCT грубо интегрирует объём B-сплайна; расширенный цилиндр на патче уходит от эталона до 7.54
+полос. От порогов вердикт не зависит: каждая из 231 различающихся записей на стоке либо невалидна, либо с другим
+числом тел, либо дальше эталона не меньше чем на 10 %.
+
+### 11.4 HybridDesign на обоих ядрах
+
+Воркбенч проверяет то, что верно на каждом ядре (HybridDesign 9935c6e, проба
+`pcurve_repair.kernel_mishandles_wide_periodic_faces()`): патч — `HD-TESTS: ran=1225 failures=0 errors=0 skipped=0 ->
+OK`, все 27 GUI-наборов offscreen `EXIT CODE: 0`; сток TKBO (`fc-gap2\patched`) — `ran=1225 failures=0 errors=0
+skipped=1 -> OK`, imports_gui `EXIT CODE: 0`; сток TKBO и TKFillet (`fc-gap2\stock`) — `ran=1225 failures=0 errors=0
+skipped=1 -> OK`, imports_gui `EXIT CODE: 0`.
+
+## 12. Как повторить
 
 ```
 powershell -ExecutionPolicy Bypass -File build-scripts\build-occt-bo.ps1 -Target TKBO
